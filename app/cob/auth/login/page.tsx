@@ -156,9 +156,9 @@ export default function Login() {
                     </form>
                     
                     <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400 w-full">
-                        Having trouble signing in?{' '}
-                        <a href="#" className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
-                            Contact IT Support
+                        Don't have an account?{' '}
+                        <a href="/cob/auth/signup" className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
+                            Sign up now
                         </a>
                     </p>
                 </main>
