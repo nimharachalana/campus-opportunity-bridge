@@ -9,6 +9,8 @@ export interface Profile {
   email: string
   full_name: string | null
   role: Role
+  community_name?: string | null
+  admin_type?: string | null
   department: string | null
   gpa: number | null
   skills: string[] | null
