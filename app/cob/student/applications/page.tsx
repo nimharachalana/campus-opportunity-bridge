@@ -2,25 +2,25 @@
 
 import { useEffect, useState } from 'react'
 import { fetchStudentApplications } from '@/app/lib/api/applications'
-import { useAuth } from '@/app/context/AuthContext'
+import { supabase } from '@/app/lib/supabase'
 import { Building2, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 
 export default function StudentApplicationsPage() {
-  const { session } = useAuth()
   const [applications, setApplications] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadApplications() {
-      if (session?.user?.id) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id) {
         setLoading(true)
-        const data = await fetchStudentApplications(session.user.id)
+        const data = await fetchStudentApplications(user.id)
         setApplications(data)
         setLoading(false)
       }
     }
     loadApplications()
-  }, [session?.user?.id])
+  }, [])
 
   const getStatusBadge = (status: string) => {
     switch (status) {

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/app/context/AuthContext'
 import { supabase } from '@/app/lib/supabase'
 import { ROUTES } from '@/app/constants/routes'
 import { User as UserIcon, Lock, ArrowRight, ShieldCheck } from 'lucide-react'
@@ -13,15 +12,6 @@ export default function Login() {
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const router = useRouter()
-    const { session, userRole } = useAuth()
-
-    useEffect(() => {
-        if (session && userRole) {
-            if (userRole === 'student') router.push(ROUTES.STUDENT_DASH)
-            else if (userRole === 'staff') router.push(ROUTES.STAFF_DASH)
-            else if (userRole === 'admin') router.push(ROUTES.ADMIN_DASH)
-        }
-    }, [session, userRole, router])
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -45,7 +35,7 @@ export default function Login() {
         }
 
         // 2. Sign in with the resolved email
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
             email: profile.email,
             password,
         })
@@ -53,7 +43,20 @@ export default function Login() {
         if (error) {
             setError(error.message)
             setLoading(false)
+            return
         }
+
+        // 3. Redirect directly based on user_metadata role
+        const role = signInData?.user?.user_metadata?.role || 'student'
+        if (role === 'staff') {
+            router.push(ROUTES.STAFF_DASH)
+        } else if (role === 'admin') {
+            router.push(ROUTES.ADMIN_DASH)
+        } else {
+            router.push(ROUTES.STUDENT_DASH)
+        }
+
+        setLoading(false)
     }
 
     return (

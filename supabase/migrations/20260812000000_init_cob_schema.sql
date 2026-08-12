@@ -74,3 +74,8 @@ CREATE POLICY "Public read for login lookup" ON public.profiles FOR SELECT USING
 CREATE POLICY "Authenticated users can read opportunities" ON public.opportunities FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Staff can manage opportunities" ON public.opportunities FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Students can manage applications" ON public.applications FOR ALL USING (auth.role() = 'authenticated');
+
+-- 6. GRANT PRIVILEGES TO AUTHENTICATED & ANON ROLES
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;

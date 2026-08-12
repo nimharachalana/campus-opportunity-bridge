@@ -1,16 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { useAuth } from '@/app/context/AuthContext'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/app/lib/supabase'
 
 export default function StudentProfile() {
-    const { session, userRole, mustChangePassword } = useAuth()
+    const [user, setUser] = useState<any>(null)
+    const [mustChangePassword, setMustChangePassword] = useState(false)
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
+
+    useEffect(() => {
+        async function loadUser() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                setUser(user)
+                const { data } = await supabase.from('profiles').select('must_change_password').eq('id', user.id).single()
+                if (data) {
+                    setMustChangePassword(data.must_change_password ?? false)
+                }
+            }
+        }
+        loadUser()
+    }, [])
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -41,11 +55,11 @@ export default function StudentProfile() {
         }
 
         // Update profiles table flag
-        if (session?.user?.id) {
+        if (user?.id) {
             const { error: profileError } = await supabase
                 .from('profiles')
                 .update({ must_change_password: false })
-                .eq('id', session.user.id)
+                .eq('id', user.id)
             
             if (profileError) {
                 console.error('Failed to update must_change_password flag', profileError)
@@ -109,10 +123,13 @@ export default function StudentProfile() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Student Profile</h1>
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-8 w-full border border-gray-200 dark:border-gray-800">
                 <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    <strong>Role:</strong> <span className="capitalize">{userRole || 'Unknown'}</span>
+                    <strong>Name:</strong> <span className="capitalize">{user?.user_metadata?.full_name || 'Student'}</span>
+                </p>
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                    <strong>Role:</strong> <span className="capitalize">{user?.user_metadata?.role || 'student'}</span>
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
-                    <strong>Synthetic Email:</strong> {session?.user?.email}
+                    <strong>Synthetic Email:</strong> {user?.email}
                 </p>
             </div>
         </div>

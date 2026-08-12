@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 import { createOpportunity } from '@/app/lib/api/opportunities'
-import { useAuth } from '@/app/context/AuthContext'
+import { supabase } from '@/app/lib/supabase'
 import { OpportunityType } from '@/app/types'
 import { PlusCircle, CheckCircle2 } from 'lucide-react'
 
 export default function StaffSubmitPage() {
-  const { session } = useAuth()
   const [title, setTitle] = useState('')
   const [department, setDepartment] = useState('')
   const [type, setType] = useState<OpportunityType>('Research')
@@ -21,6 +20,8 @@ export default function StaffSubmitPage() {
     setLoading(true)
     setMessage(null)
 
+    const { data: { user } } = await supabase.auth.getUser()
+
     const required_skills = skillsRaw
       .split(',')
       .map((s) => s.trim())
@@ -33,7 +34,7 @@ export default function StaffSubmitPage() {
         type,
         description,
         required_skills,
-        posted_by: session?.user?.id || null,
+        posted_by: user?.id || null,
         status: 'open',
       })
 

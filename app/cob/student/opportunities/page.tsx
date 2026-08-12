@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react'
 import { fetchOpportunities } from '@/app/lib/api/opportunities'
 import { applyToOpportunity } from '@/app/lib/api/applications'
-import { useAuth } from '@/app/context/AuthContext'
+import { supabase } from '@/app/lib/supabase'
 import { Opportunity } from '@/app/types'
 import { Briefcase, Building2, CheckCircle2, Clock, Sparkles } from 'lucide-react'
 
 export default function StudentOpportunitiesPage() {
-  const { session } = useAuth()
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [loading, setLoading] = useState(true)
   const [applyingId, setApplyingId] = useState<string | null>(null)
@@ -26,7 +25,9 @@ export default function StudentOpportunitiesPage() {
   }, [])
 
   const handleApply = async (opportunityId: string) => {
-    if (!session?.user?.id) {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user?.id) {
       alert('Please sign in to apply')
       return
     }
@@ -35,7 +36,7 @@ export default function StudentOpportunitiesPage() {
     setMessage(null)
 
     try {
-      await applyToOpportunity(opportunityId, session.user.id)
+      await applyToOpportunity(opportunityId, user.id)
       setAppliedSet((prev) => new Set(prev).add(opportunityId))
       setMessage('Application submitted successfully!')
     } catch (err: any) {
