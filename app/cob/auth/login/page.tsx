@@ -142,17 +142,17 @@ export default function StudentLogin() {
                     <form onSubmit={handleLogin} className="space-y-5">
                         <div className="space-y-2">
                             <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                                Email Address or Student ID
+                                Email Address
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-400">
                                     <User className="w-5 h-5" />
                                 </div>
                                 <input
-                                    type="text"
+                                    type="email"
                                     required
                                     value={identifier}
-                                    placeholder="student@university.edu or ST202610"
+                                    placeholder="name@gmail.com"
                                     onChange={(e) => setIdentifier(e.target.value)}
                                     className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-slate-800 focus:border-indigo-500 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
                                 />

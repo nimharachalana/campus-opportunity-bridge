@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT NOT NULL,
     full_name TEXT,
     role TEXT CHECK (role IN ('student', 'staff', 'admin')) DEFAULT 'student',
+    community_name TEXT,
+    admin_type TEXT,
     department TEXT,
     gpa NUMERIC(3, 2),
     skills TEXT[],
@@ -21,16 +23,22 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, role, student_id, must_change_password)
+  INSERT INTO public.profiles (id, email, full_name, role, student_id, community_name, admin_type, must_change_password)
   VALUES (
     new.id,
     new.email,
     COALESCE(new.raw_user_meta_data->>'full_name', ''),
     COALESCE(new.raw_user_meta_data->>'role', 'student'),
     new.raw_user_meta_data->>'student_id',
+    new.raw_user_meta_data->>'community_name',
+    new.raw_user_meta_data->>'admin_type',
     FALSE
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    role = EXCLUDED.role,
+    community_name = EXCLUDED.community_name,
+    admin_type = EXCLUDED.admin_type;
   RETURN new;
 END;
 $$;
@@ -71,7 +79,7 @@ ALTER TABLE public.opportunities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public read for login lookup" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can read opportunities" ON public.opportunities FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Public & authenticated users can read opportunities" ON public.opportunities FOR SELECT USING (true);
 CREATE POLICY "Staff can manage opportunities" ON public.opportunities FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Students can manage applications" ON public.applications FOR ALL USING (auth.role() = 'authenticated');
 

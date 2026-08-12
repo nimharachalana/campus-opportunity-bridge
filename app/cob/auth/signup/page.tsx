@@ -151,7 +151,7 @@ export default function StudentSignUp() {
                                     type="email"
                                     required
                                     value={email}
-                                    placeholder="alex.morgan@university.edu"
+                                    placeholder="name@gmail.com"
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full pl-11 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-indigo-500 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
                                 />
