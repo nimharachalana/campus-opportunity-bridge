@@ -25,3 +25,17 @@ export async function createOpportunity(opportunity: Partial<Opportunity>) {
   }
   return data[0] as Opportunity
 }
+
+export async function getOpportunityById(id: string) {
+  const { data, error } = await supabase
+    .from('opportunities')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching opportunity by id:', error)
+    return null
+  }
+  return data as Opportunity
+}
