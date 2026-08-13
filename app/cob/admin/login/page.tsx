@@ -135,10 +135,14 @@ export default function AdminControlPortal() {
     return (
         <div className="flex min-h-screen w-full bg-slate-950 font-sans selection:bg-purple-500 selection:text-white relative">
             {toastMessage && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">{toastMessage}</span>
-                    <button type="button" onClick={() => setToastMessage(null)} className="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors"><X className="w-4 h-4"/></button>
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 border border-purple-500/30 text-purple-200 px-5 py-3 rounded-2xl shadow-[0_0_40px_-10px_rgba(168,85,247,0.3)] backdrop-blur-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-8 duration-300">
+                    <div className="p-1.5 bg-purple-500/20 rounded-full">
+                        <AlertCircle className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <span className="text-sm font-semibold tracking-wide">{toastMessage}</span>
+                    <button type="button" onClick={() => setToastMessage(null)} className="ml-4 text-purple-400/60 hover:text-purple-300 hover:bg-purple-500/10 p-1.5 rounded-full transition-all">
+                        <X className="w-4 h-4"/>
+                    </button>
                 </div>
             )}
             {/* Left Side - Dark Purple Aesthetic Branding Banner */}
@@ -224,8 +228,8 @@ export default function AdminControlPortal() {
                                 type="button"
                                 onClick={() => setAdminRole('staff')}
                                 className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'staff'
-                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                                        : 'text-slate-400 hover:text-slate-200'
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                                    : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
                                 <UserCheck className="w-4 h-4" /> University Staff
@@ -234,8 +238,8 @@ export default function AdminControlPortal() {
                                 type="button"
                                 onClick={() => setAdminRole('community')}
                                 className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'community'
-                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                                        : 'text-slate-400 hover:text-slate-200'
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                                    : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
                                 <Building2 className="w-4 h-4" /> Community Admin
