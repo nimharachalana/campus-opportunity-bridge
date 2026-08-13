@@ -1,6 +1,23 @@
 import { supabase } from '@/app/lib/supabase'
 import { Application } from '@/app/types'
 
+export async function applyToOpportunity(opportunityId: string, studentId: string, notes?: string) {
+  const { data, error } = await supabase
+    .from('applications')
+    .insert([
+      {
+        opportunity_id: opportunityId,
+        student_id: studentId,
+        status: 'pending',
+        notes: notes || null,
+      },
+    ])
+    .select()
+
+  if (error) {
+    throw new Error(error.message)
+  }
+  return data[0] as Application
 const LOCAL_APPLICATIONS_KEY = 'cob_local_applications'
 
 export async function applyToOpportunity(opportunityId: string, studentId: string) {
