@@ -17,13 +17,15 @@ import {
     Compass,
     Sparkles,
     AlertCircle,
-    GraduationCap
+    GraduationCap,
+    X
 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminControlPortal() {
     const [adminRole, setAdminRole] = useState<'staff' | 'community'>('staff')
-    const [isRegisterMode, setIsRegisterMode] = useState(true)
+    const [isRegisterMode, setIsRegisterMode] = useState(false)
+    const [toastMessage, setToastMessage] = useState<string | null>(null)
 
     // Common fields
     const [email, setEmail] = useState('')
@@ -109,7 +111,12 @@ export default function AdminControlPortal() {
             })
 
             if (signInError) {
-                setError(signInError.message)
+                if (signInError.message.toLowerCase().includes('invalid login credentials')) {
+                    setToastMessage('Account not found. Please click "Register Instead" to create an account.')
+                    setTimeout(() => setToastMessage(null), 5000)
+                } else {
+                    setError(signInError.message)
+                }
                 setLoading(false)
                 return
             }
@@ -126,7 +133,14 @@ export default function AdminControlPortal() {
     }
 
     return (
-        <div className="flex min-h-screen w-full bg-slate-950 font-sans selection:bg-purple-500 selection:text-white">
+        <div className="flex min-h-screen w-full bg-slate-950 font-sans selection:bg-purple-500 selection:text-white relative">
+            {toastMessage && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">{toastMessage}</span>
+                    <button type="button" onClick={() => setToastMessage(null)} className="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors"><X className="w-4 h-4"/></button>
+                </div>
+            )}
             {/* Left Side - Dark Purple Aesthetic Branding Banner */}
             <div className="hidden lg:flex flex-col flex-1 relative overflow-hidden bg-gradient-to-br from-purple-950 via-slate-900 to-indigo-950 justify-between p-12 border-r border-purple-900/30">
                 <div className="absolute top-1/3 -left-20 w-96 h-96 bg-purple-600/25 rounded-full mix-blend-screen filter blur-[120px] animate-pulse" />
@@ -209,22 +223,20 @@ export default function AdminControlPortal() {
                             <button
                                 type="button"
                                 onClick={() => setAdminRole('staff')}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                                    adminRole === 'staff'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'staff'
                                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                                         : 'text-slate-400 hover:text-slate-200'
-                                }`}
+                                    }`}
                             >
                                 <UserCheck className="w-4 h-4" /> University Staff
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setAdminRole('community')}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                                    adminRole === 'community'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'community'
                                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                                         : 'text-slate-400 hover:text-slate-200'
-                                }`}
+                                    }`}
                             >
                                 <Building2 className="w-4 h-4" /> Community Admin
                             </button>
@@ -403,10 +415,10 @@ export default function AdminControlPortal() {
                             {loading
                                 ? 'Processing...'
                                 : isRegisterMode
-                                ? adminRole === 'staff'
-                                    ? 'Register Staff Account'
-                                    : 'Register Organization'
-                                : 'Sign In to Control Portal'}
+                                    ? adminRole === 'staff'
+                                        ? 'Register Staff Account'
+                                        : 'Register Organization'
+                                    : 'Sign In to Control Portal'}
                             {!loading && <ArrowRight className="w-4 h-4" />}
                         </button>
                     </form>

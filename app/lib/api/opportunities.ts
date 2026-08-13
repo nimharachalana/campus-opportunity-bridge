@@ -145,3 +145,17 @@ export async function deleteOpportunity(id: string): Promise<void> {
     console.warn('Supabase delete failed:', e)
   }
 }
+
+export async function getOpportunityById(id: string) {
+  const { data, error } = await supabase
+    .from('opportunities')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching opportunity by id:', error)
+    return null
+  }
+  return data as Opportunity
+}
