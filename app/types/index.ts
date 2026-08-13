@@ -15,6 +15,7 @@ export interface Profile {
   gpa: number | null
   skills: string[] | null
   must_change_password: boolean
+  avatar_url: string | null
   created_at: string
 }
 
@@ -23,18 +24,52 @@ export interface Opportunity {
   title: string
   description: string
   department: string
-  type: OpportunityType
+  type: string
   required_skills: string[] | null
   posted_by: string | Profile | null
-  status: OpportunityStatus
+  status: string
   created_at: string
+  // extended fields
+  is_paid?: boolean
+  is_remote?: boolean
+  benefits?: string | null
+  eligibility?: string | null
+  deadline?: string | null
+  start_date?: string | null
+  location?: string | null
+  faculty?: string | null
+  sources?: string | null
+  organization?: string | null
 }
 
 export interface Application {
   id: string
-  opportunity_id: string | Opportunity
-  student_id: string | Profile
-  status: ApplicationStatus
+  opportunity_id: string
+  student_id: string
+  status: 'pending' | 'under_review' | 'accepted' | 'rejected'
   notes: string | null
   applied_at: string
+  // extended fields if joined
+  opportunity?: Opportunity
+  student?: Profile
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  title: string
+  message: string
+  type: string
+  link: string | null
+  is_read: boolean
+  created_at: string
+}
+
+export interface SupportMessage {
+  id: string
+  student_id: string
+  message: string
+  is_from_admin: boolean
+  is_read: boolean
+  created_at: string
 }

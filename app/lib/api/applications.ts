@@ -1,7 +1,7 @@
 import { supabase } from '@/app/lib/supabase'
 import { Application } from '@/app/types'
 
-export async function applyToOpportunity(opportunityId: string, studentId: string) {
+export async function applyToOpportunity(opportunityId: string, studentId: string, notes?: string) {
   const { data, error } = await supabase
     .from('applications')
     .insert([
@@ -9,6 +9,7 @@ export async function applyToOpportunity(opportunityId: string, studentId: strin
         opportunity_id: opportunityId,
         student_id: studentId,
         status: 'pending',
+        notes: notes || null,
       },
     ])
     .select()
