@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { ROUTES } from '@/app/constants/routes'
@@ -32,7 +32,18 @@ export default function AdminControlPortal() {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [fullName, setFullName] = useState('')
-    const [communityName, setCommunityName] = useState('')
+    const [communityId, setCommunityId] = useState('')
+    const [communitiesList, setCommunitiesList] = useState<{ id: string, name: string }[]>([])
+
+    useEffect(() => {
+        const fetchCommunities = async () => {
+            const { data } = await supabase.from('communities').select('id, name')
+            if (data) {
+                setCommunitiesList(data)
+            }
+        }
+        fetchCommunities()
+    }, [])
 
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -49,7 +60,6 @@ export default function AdminControlPortal() {
         const trimmedEmail = email.trim().toLowerCase()
 
         if (isRegisterMode) {
-            // Validate password match
             if (password !== confirmPassword) {
                 setError('Passwords do not match.')
                 setLoading(false)
@@ -62,16 +72,14 @@ export default function AdminControlPortal() {
                 return
             }
 
-            // Staff email validation requirement (university email)
             if (adminRole === 'staff' && !trimmedEmail.includes('@')) {
                 setError('Please provide a valid university email address.')
                 setLoading(false)
                 return
             }
 
-            // Community Admin organization requirement
-            if (adminRole === 'community' && !communityName.trim()) {
-                setError('Please specify your Community or Organization Name.')
+            if (adminRole === 'community' && !communityId) {
+                setError('Please specify your Community or Organization.')
                 setLoading(false)
                 return
             }
@@ -86,7 +94,7 @@ export default function AdminControlPortal() {
                         full_name: fullName.trim(),
                         role: targetRole,
                         admin_type: adminRole,
-                        community_name: adminRole === 'community' ? communityName.trim() : null,
+                        community_id: adminRole === 'community' ? communityId : null,
                     }
                 }
             })
@@ -97,14 +105,12 @@ export default function AdminControlPortal() {
                 return
             }
 
-            // Redirect based on assigned role
             if (adminRole === 'staff') {
                 router.push(ROUTES.STAFF_DASH)
             } else {
                 router.push(ROUTES.ADMIN_DASH)
             }
         } else {
-            // Sign In flow
             const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                 email: trimmedEmail,
                 password,
@@ -145,6 +151,7 @@ export default function AdminControlPortal() {
                     </button>
                 </div>
             )}
+
             {/* Left Side - Dark Purple Aesthetic Branding Banner */}
             <div className="hidden lg:flex flex-col flex-1 relative overflow-hidden bg-gradient-to-br from-purple-950 via-slate-900 to-indigo-950 justify-between p-12 border-r border-purple-900/30">
                 <div className="absolute top-1/3 -left-20 w-96 h-96 bg-purple-600/25 rounded-full mix-blend-screen filter blur-[120px] animate-pulse" />
@@ -181,7 +188,6 @@ export default function AdminControlPortal() {
             {/* Right Side - Admin Control Form */}
             <div className="flex flex-1 flex-col items-center justify-between p-6 sm:p-12 lg:p-16 relative bg-slate-900/95 text-slate-100 overflow-y-auto">
                 <div className="w-full max-w-[460px] pt-4 my-auto">
-                    {/* Navigation Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-2 lg:hidden">
                             <ShieldCheck className="w-6 h-6 text-purple-400" />
@@ -196,7 +202,7 @@ export default function AdminControlPortal() {
                         </p>
                     </div>
 
-                    {/* Role Switcher: Student vs Admin */}
+                    {/* Portal Tier Switcher */}
                     <div className="mb-6 space-y-3">
                         <label className="text-xs font-semibold text-purple-300 uppercase tracking-wider block">
                             Select Portal Tier
@@ -218,7 +224,7 @@ export default function AdminControlPortal() {
                         </div>
                     </div>
 
-                    {/* Role Switcher: Staff vs Community Admin */}
+                    {/* Admin Role Switcher */}
                     <div className="mb-6 space-y-3">
                         <label className="text-xs font-semibold text-purple-300 uppercase tracking-wider block">
                             Select Admin Portal Tier
@@ -230,7 +236,7 @@ export default function AdminControlPortal() {
                                 className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'staff'
                                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                                     : 'text-slate-400 hover:text-slate-200'
-                                    }`}
+                                }`}
                             >
                                 <UserCheck className="w-4 h-4" /> University Staff
                             </button>
@@ -240,14 +246,14 @@ export default function AdminControlPortal() {
                                 className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'community'
                                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                                     : 'text-slate-400 hover:text-slate-200'
-                                    }`}
+                                }`}
                             >
                                 <Building2 className="w-4 h-4" /> Community Admin
                             </button>
                         </div>
                     </div>
 
-                    {/* Register vs Sign In Toggle Header */}
+                    {/* Register vs Sign In Header */}
                     <div className="mb-6 flex items-center justify-between border-b border-slate-800 pb-4">
                         <div>
                             <h2 className="text-2xl font-extrabold text-white tracking-tight">
@@ -275,60 +281,72 @@ export default function AdminControlPortal() {
 
                     {/* Form */}
                     <form onSubmit={handleAuth} className="space-y-4">
-                        {isRegisterMode && (
-                            <>
-                                {adminRole === 'community' && (
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                                            Organization / Community Name
-                                        </label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
-                                                <Building2 className="w-4 h-4" />
-                                            </div>
-                                            <select
-                                                required
-                                                value={communityName}
-                                                onChange={(e) => setCommunityName(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/30 transition-all appearance-none cursor-pointer"
-                                            >
-                                                <option value="" disabled>Select your Community</option>
-                                                <option value="Career Circle">Career Circle</option>
-                                                <option value="Technobot">Technobot</option>
-                                                <option value="ICT Circle">ICT Circle</option>
-                                                <option value="Research Circle">Research Circle</option>
-                                                <option value="BITRAC Society">BITRAC Society</option>
-                                                <option value="Sports Club">Sports Club</option>
-                                                <option value="Media Club">Media Club</option>
-                                                <option value="Cultural Circle">Cultural Circle</option>
-                                                <option value="Food Society">Food Society</option>
-                                            </select>
-                                            <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                            </div>
-                                        </div>
-                                    </div>
+                        {error && (
+                            <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-sm font-medium flex flex-col gap-2 mb-4">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                    <span>{error}</span>
+                                </div>
+                                {!isRegisterMode && error.includes('register first') && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsRegisterMode(true); setError(null); }}
+                                        className="text-left text-xs text-red-200 underline underline-offset-2 hover:text-white transition-colors flex items-center gap-1"
+                                    >
+                                        Click here to create a new account <ArrowRight className="w-3 h-3" />
+                                    </button>
                                 )}
+                            </div>
+                        )}
 
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                                        Full Name
-                                    </label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
-                                            <User className="w-4 h-4" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={fullName}
-                                            placeholder="Prof. Sarah Jenkins"
-                                            onChange={(e) => setFullName(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
-                                        />
+                        {adminRole === 'community' && (
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                    Organization / Community Name
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
+                                        <Building2 className="w-4 h-4" />
+                                    </div>
+                                    <select
+                                        required
+                                        value={communityId}
+                                        onChange={(e) => setCommunityId(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/30 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="" disabled>Select your Community</option>
+                                        {communitiesList.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </div>
                                 </div>
-                            </>
+                            </div>
+                        )}
+
+                        {isRegisterMode && (
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                    Full Name
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={fullName}
+                                        placeholder="Prof. Sarah Jenkins"
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
+                                    />
+                                </div>
+                            </div>
                         )}
 
                         <div className="space-y-1.5">
@@ -404,13 +422,6 @@ export default function AdminControlPortal() {
                             </div>
                         )}
 
-                        {error && (
-                            <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-xs font-medium flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4 shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
                         <button
                             type="submit"
                             disabled={loading}
@@ -428,7 +439,7 @@ export default function AdminControlPortal() {
                     </form>
                 </div>
 
-                {/* Instant Guest Access Footer Link */}
+                {/* Guest Access Footer */}
                 <div className="w-full max-w-[460px] mt-6 pt-5 border-t border-slate-800 flex flex-col items-center gap-2">
                     <p className="text-xs text-slate-400">Want to view public student opportunities?</p>
                     <Link

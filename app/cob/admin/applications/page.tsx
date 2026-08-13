@@ -38,6 +38,7 @@ export default function AdminApplicationsReviewPage() {
   }, [])
 
   const handleStatusChange = async (id: string, newStatus: ApplicationStatus) => {
+    if (newStatus === 'pending') return // pending is not a valid transition target
     setUpdatingId(id)
     try {
       await updateApplicationStatus(id, newStatus)
