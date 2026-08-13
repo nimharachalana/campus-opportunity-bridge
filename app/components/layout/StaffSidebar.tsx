@@ -1,29 +1,110 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import {
+  PlusCircle,
+  UserCheck,
+  Eye,
+  LogOut,
+  ShieldCheck,
+} from 'lucide-react'
 
 export default function StaffSidebar() {
-    return (
-        <div className="w-64 bg-gray-900 text-white h-screen p-4 flex flex-col gap-4 border-r border-zinc-800">
-            <h2 className="text-xl font-bold mb-4 px-2 text-indigo-400">Staff Panel</h2>
-            <nav className="flex flex-col gap-2">
-                <Link 
-                    href="/cob/staff/submit" 
-                    className="px-4 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors text-sm font-medium"
-                >
-                    Post Opportunity
-                </Link>
-                <Link 
-                    href="/cob/staff/applications" 
-                    className="px-4 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors text-sm font-medium"
-                >
-                    Review Applicants
-                </Link>
-                <Link 
-                    href="/cob/staff/user-manage"
-                    className="px-4 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors text-sm font-medium"
-                >
-                    User Management
-                </Link>
-            </nav>
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('cob_current_admin')
+      localStorage.removeItem('cob_current_user')
+    }
+    router.push('/cob/admin/login')
+  }
+
+  const navItems = [
+    {
+      href: '/cob/staff/submit',
+      label: 'Publishing & Communities',
+      icon: PlusCircle,
+      desc: 'Post roles, research & clubs'
+    },
+    {
+      href: '/cob/staff/applications',
+      label: 'Review Applicants',
+      icon: UserCheck,
+      desc: 'Evaluate student submissions'
+    }
+  ]
+
+  return (
+    <div className="w-72 bg-slate-950 text-slate-100 h-screen p-5 flex flex-col justify-between border-r border-slate-800/80 shrink-0">
+      <div className="space-y-6">
+        {/* Brand Header */}
+        <div className="p-3 bg-indigo-950/40 border border-indigo-800/40 rounded-2xl flex items-center gap-3">
+          <div className="p-2 bg-indigo-600/30 rounded-xl border border-indigo-400/30 text-indigo-400">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-white tracking-tight">Staff Control Panel</h2>
+            <span className="text-[11px] text-indigo-300 font-medium">Faculty & Research Tier</span>
+          </div>
         </div>
-    );   
+
+        {/* Navigation Items */}
+        <nav className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-1">
+            Core Modules
+          </span>
+
+          {navItems.map((item) => {
+            const isActive = pathname === item.href
+            const Icon = item.icon
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`p-3 rounded-2xl flex items-start gap-3 transition-all ${
+                  isActive
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 font-bold'
+                    : 'hover:bg-slate-900 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
+                <div>
+                  <span className="text-xs font-semibold block">{item.label}</span>
+                  <span className={`text-[10px] block ${isActive ? 'text-indigo-200' : 'text-slate-500'}`}>
+                    {item.desc}
+                  </span>
+                </div>
+              </Link>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* Bottom Actions */}
+      <div className="space-y-3 pt-4 border-t border-slate-800/80">
+        <Link
+          href="/cob/student/opportunities"
+          target="_blank"
+          className="w-full flex items-center justify-between p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs text-slate-300 font-medium transition-all"
+        >
+          <span className="flex items-center gap-2">
+            <Eye className="w-4 h-4 text-indigo-400" /> Student View
+          </span>
+          <span className="text-[10px] px-1.5 py-0.5 bg-indigo-950 text-indigo-300 rounded font-mono">Live</span>
+        </Link>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2 p-2.5 text-rose-400 hover:bg-rose-950/30 rounded-xl text-xs font-semibold transition-all"
+        >
+          <LogOut className="w-4 h-4" /> Sign Out from Staff Portal
+        </button>
+      </div>
+    </div>
+  )
 }
