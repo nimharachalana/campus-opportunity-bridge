@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { ROUTES } from '@/app/constants/routes'
-import { User, Lock, Eye, EyeOff, ArrowRight, GraduationCap, ShieldCheck, Compass } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, ArrowRight, GraduationCap, ShieldCheck, Compass, AlertCircle, X } from 'lucide-react'
 import Link from 'next/link'
 
 export default function StudentLogin() {
     const [identifier, setIdentifier] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    const [toastMessage, setToastMessage] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const router = useRouter()
@@ -32,7 +33,8 @@ export default function StudentLogin() {
                 .single()
 
             if (lookupError || !profile?.email) {
-                setError('No student account found with this Student ID.')
+                setToastMessage('No student account found. Please click "Create Account" to register.')
+                setTimeout(() => setToastMessage(null), 5000)
                 setLoading(false)
                 return
             }
@@ -46,7 +48,12 @@ export default function StudentLogin() {
         })
 
         if (authError) {
-            setError(authError.message)
+            if (authError.message.toLowerCase().includes('invalid login credentials')) {
+                setToastMessage('Account not found. Please click "Create Account" to register.')
+                setTimeout(() => setToastMessage(null), 5000)
+            } else {
+                setError(authError.message)
+            }
             setLoading(false)
             return
         }
@@ -65,7 +72,18 @@ export default function StudentLogin() {
     }
 
     return (
-        <div className="flex min-h-screen w-full bg-slate-950 font-sans selection:bg-indigo-500 selection:text-white">
+        <div className="flex min-h-screen w-full bg-slate-950 font-sans selection:bg-indigo-500 selection:text-white relative">
+            {toastMessage && (
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 border border-indigo-500/30 text-indigo-200 px-5 py-3 rounded-2xl shadow-[0_0_40px_-10px_rgba(99,102,241,0.3)] backdrop-blur-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-8 duration-300">
+                    <div className="p-1.5 bg-indigo-500/20 rounded-full">
+                        <AlertCircle className="w-4 h-4 text-indigo-400" />
+                    </div>
+                    <span className="text-sm font-semibold tracking-wide">{toastMessage}</span>
+                    <button type="button" onClick={() => setToastMessage(null)} className="ml-4 text-indigo-400/60 hover:text-indigo-300 hover:bg-indigo-500/10 p-1.5 rounded-full transition-all">
+                        <X className="w-4 h-4"/>
+                    </button>
+                </div>
+            )}
             {/* Left Side - Modern Indigo Graphic Banner */}
             <div className="hidden lg:flex flex-col flex-1 relative overflow-hidden bg-gradient-to-br from-indigo-950 via-blue-950 to-slate-900 justify-between p-12 border-r border-indigo-900/30">
                 {/* Micro-animated glows */}
