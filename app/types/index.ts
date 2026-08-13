@@ -24,6 +24,12 @@ export interface Opportunity {
   description: string
   department: string
   type: OpportunityType
+  community_name?: string | null
+  supervisor?: string | null
+  funding_type?: string | null
+  seats?: number | null
+  deadline?: string | null
+  min_gpa?: number | null
   required_skills: string[] | null
   posted_by: string | Profile | null
   status: OpportunityStatus
@@ -33,7 +39,9 @@ export interface Opportunity {
 export interface Application {
   id: string
   opportunity_id: string | Opportunity
+  opportunity?: Opportunity
   student_id: string | Profile
+  student?: Profile
   status: ApplicationStatus
   notes: string | null
   applied_at: string
