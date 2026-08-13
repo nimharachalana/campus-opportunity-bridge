@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { ROUTES } from '@/app/constants/routes'
@@ -23,14 +23,25 @@ import Link from 'next/link'
 
 export default function AdminControlPortal() {
     const [adminRole, setAdminRole] = useState<'staff' | 'community'>('staff')
-    const [isRegisterMode, setIsRegisterMode] = useState(true)
+    const [isRegisterMode, setIsRegisterMode] = useState(false)
 
     // Common fields
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [fullName, setFullName] = useState('')
-    const [communityName, setCommunityName] = useState('')
+    const [communityId, setCommunityId] = useState('')
+    const [communitiesList, setCommunitiesList] = useState<{ id: string, name: string }[]>([])
+
+    useEffect(() => {
+        const fetchCommunities = async () => {
+            const { data } = await supabase.from('communities').select('id, name')
+            if (data) {
+                setCommunitiesList(data)
+            }
+        }
+        fetchCommunities()
+    }, [])
 
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -68,8 +79,8 @@ export default function AdminControlPortal() {
             }
 
             // Community Admin organization requirement
-            if (adminRole === 'community' && !communityName.trim()) {
-                setError('Please specify your Community or Organization Name.')
+            if (adminRole === 'community' && !communityId) {
+                setError('Please specify your Community or Organization.')
                 setLoading(false)
                 return
             }
@@ -84,7 +95,7 @@ export default function AdminControlPortal() {
                         full_name: fullName.trim(),
                         role: targetRole,
                         admin_type: adminRole,
-                        community_name: adminRole === 'community' ? communityName.trim() : null,
+                        community_id: adminRole === 'community' ? communityId : null,
                     }
                 }
             })
@@ -109,7 +120,11 @@ export default function AdminControlPortal() {
             })
 
             if (signInError) {
-                setError(signInError.message)
+                if (signInError.message.includes('Invalid login credentials')) {
+                    setError('Account not found or incorrect password. If you are new, please register first.')
+                } else {
+                    setError(signInError.message)
+                }
                 setLoading(false)
                 return
             }
@@ -209,22 +224,20 @@ export default function AdminControlPortal() {
                             <button
                                 type="button"
                                 onClick={() => setAdminRole('staff')}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                                    adminRole === 'staff'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'staff'
                                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                                         : 'text-slate-400 hover:text-slate-200'
-                                }`}
+                                    }`}
                             >
                                 <UserCheck className="w-4 h-4" /> University Staff
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setAdminRole('community')}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                                    adminRole === 'community'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'community'
                                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                                         : 'text-slate-400 hover:text-slate-200'
-                                }`}
+                                    }`}
                             >
                                 <Building2 className="w-4 h-4" /> Community Admin
                             </button>
@@ -259,60 +272,72 @@ export default function AdminControlPortal() {
 
                     {/* Form */}
                     <form onSubmit={handleAuth} className="space-y-4">
-                        {isRegisterMode && (
-                            <>
-                                {adminRole === 'community' && (
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                                            Organization / Community Name
-                                        </label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
-                                                <Building2 className="w-4 h-4" />
-                                            </div>
-                                            <select
-                                                required
-                                                value={communityName}
-                                                onChange={(e) => setCommunityName(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/30 transition-all appearance-none cursor-pointer"
-                                            >
-                                                <option value="" disabled>Select your Community</option>
-                                                <option value="Career Circle">Career Circle</option>
-                                                <option value="Technobot">Technobot</option>
-                                                <option value="ICT Circle">ICT Circle</option>
-                                                <option value="Research Circle">Research Circle</option>
-                                                <option value="BITRAC Society">BITRAC Society</option>
-                                                <option value="Sports Club">Sports Club</option>
-                                                <option value="Media Club">Media Club</option>
-                                                <option value="Cultural Circle">Cultural Circle</option>
-                                                <option value="Food Society">Food Society</option>
-                                            </select>
-                                            <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                            </div>
-                                        </div>
-                                    </div>
+                        {error && (
+                            <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-sm font-medium flex flex-col gap-2 mb-4 shadow-lg shadow-red-900/20">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                    <span>{error}</span>
+                                </div>
+                                {!isRegisterMode && error.includes('register first') && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setIsRegisterMode(true); setError(null); }} 
+                                        className="text-left text-xs text-red-200 underline underline-offset-2 hover:text-white transition-colors flex items-center gap-1"
+                                    >
+                                        Click here to create a new account <ArrowRight className="w-3 h-3" />
+                                    </button>
                                 )}
+                            </div>
+                        )}
 
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                                        Full Name
-                                    </label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
-                                            <User className="w-4 h-4" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={fullName}
-                                            placeholder="Prof. Sarah Jenkins"
-                                            onChange={(e) => setFullName(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
-                                        />
+                        {adminRole === 'community' && (
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                    Organization / Community Name
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
+                                        <Building2 className="w-4 h-4" />
+                                    </div>
+                                    <select
+                                        required
+                                        value={communityId}
+                                        onChange={(e) => setCommunityId(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/30 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="" disabled>Select your Community</option>
+                                        {communitiesList.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </div>
                                 </div>
-                            </>
+                            </div>
+                        )}
+
+                        {isRegisterMode && (
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                    Full Name
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={fullName}
+                                        placeholder="Prof. Sarah Jenkins"
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
+                                    />
+                                </div>
+                            </div>
                         )}
 
                         <div className="space-y-1.5">
@@ -388,12 +413,7 @@ export default function AdminControlPortal() {
                             </div>
                         )}
 
-                        {error && (
-                            <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-xs font-medium flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4 shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
+
 
                         <button
                             type="submit"
@@ -403,10 +423,10 @@ export default function AdminControlPortal() {
                             {loading
                                 ? 'Processing...'
                                 : isRegisterMode
-                                ? adminRole === 'staff'
-                                    ? 'Register Staff Account'
-                                    : 'Register Organization'
-                                : 'Sign In to Control Portal'}
+                                    ? adminRole === 'staff'
+                                        ? 'Register Staff Account'
+                                        : 'Register Organization'
+                                    : 'Sign In to Control Portal'}
                             {!loading && <ArrowRight className="w-4 h-4" />}
                         </button>
                     </form>
