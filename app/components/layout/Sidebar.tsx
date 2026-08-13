@@ -15,8 +15,8 @@ export default function Sidebar() {
     ]
 
     return (
-        <div className="w-64 bg-[#0f172a] text-slate-300 h-screen p-6 flex flex-col gap-6 border-r border-slate-800 shrink-0">
-            <h2 className="text-xl font-bold px-2 text-teal-400 tracking-tight">COB Portal</h2>
+        <div className="w-64 bg-gray-900 text-white h-screen p-4 flex flex-col gap-4 border-r border-zinc-800 sticky top-0 self-start">
+            <h2 className="text-xl font-bold mb-4 px-2 text-blue-400">Student Panel</h2>
             <nav className="flex flex-col gap-2">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href
