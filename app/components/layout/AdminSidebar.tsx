@@ -72,7 +72,7 @@ export default function AdminSidebar() {
   ]
 
   return (
-    <div className="w-72 bg-slate-950 text-slate-100 h-screen p-5 flex flex-col justify-between border-r border-purple-900/30 shrink-0">
+    <div className="w-72 bg-slate-950 text-slate-100 h-screen p-5 flex flex-col justify-between border-r border-purple-900/30 shrink-0 sticky top-0 self-start">
       <div className="space-y-6">
         {/* Brand Header */}
         <div className="p-3.5 bg-gradient-to-r from-purple-950/60 to-slate-900 border border-purple-800/40 rounded-2xl flex items-center gap-3 shadow-lg shadow-purple-950/20">

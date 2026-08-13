@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Sidebar() {
     return (
-        <div className="w-64 bg-gray-900 text-white h-screen p-4 flex flex-col gap-4 border-r border-zinc-800">
+        <div className="w-64 bg-gray-900 text-white h-screen p-4 flex flex-col gap-4 border-r border-zinc-800 sticky top-0 self-start">
             <h2 className="text-xl font-bold mb-4 px-2 text-blue-400">Student Panel</h2>
             <nav className="flex flex-col gap-2">
                 <Link 
