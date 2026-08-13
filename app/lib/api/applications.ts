@@ -3,13 +3,13 @@ import { Application } from '@/app/types'
 
 const LOCAL_APPLICATIONS_KEY = 'cob_local_applications'
 
-export async function applyToOpportunity(opportunityId: string, studentId: string) {
+export async function applyToOpportunity(opportunityId: string, studentId: string, notes?: string) {
   const newApp: Application = {
     id: 'app-' + Date.now(),
     opportunity_id: opportunityId,
     student_id: studentId,
     status: 'pending',
-    notes: null,
+    notes: notes || null,
     applied_at: new Date().toISOString(),
   }
 
@@ -32,6 +32,7 @@ export async function applyToOpportunity(opportunityId: string, studentId: strin
           opportunity_id: opportunityId,
           student_id: studentId,
           status: 'pending',
+          notes: notes || null,
         },
       ])
       .select()
@@ -67,7 +68,7 @@ export async function fetchStudentApplications(studentId: string) {
       const stored = localStorage.getItem(LOCAL_APPLICATIONS_KEY)
       if (stored) {
         const list: Application[] = JSON.parse(stored)
-        return list.filter((app) => (typeof app.student_id === 'string' ? app.student_id === studentId : app.student_id?.id === studentId))
+        return list.filter((app) => (typeof app.student_id === 'string' ? app.student_id === studentId : (app.student_id as any)?.id === studentId))
       }
     } catch (e) {
       console.warn('Local read error:', e)

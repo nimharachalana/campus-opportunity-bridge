@@ -123,16 +123,7 @@ export default function AdminSidebar() {
 
       {/* Bottom Actions */}
       <div className="space-y-3 pt-4 border-t border-slate-800/80">
-        <Link
-          href="/cob/student/opportunities"
-          target="_blank"
-          className="w-full flex items-center justify-between p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs text-slate-300 font-medium transition-all"
-        >
-          <span className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-purple-400" /> Student View
-          </span>
-          <span className="text-[10px] px-1.5 py-0.5 bg-purple-950 text-purple-300 rounded font-mono">Live</span>
-        </Link>
+
 
         <button
           type="button"
