@@ -36,6 +36,7 @@ export interface Opportunity {
   posted_by: string | Profile | null
   status: string
   created_at: string
+  image_url?: string | null
   // extended fields
   is_paid?: boolean
   is_remote?: boolean

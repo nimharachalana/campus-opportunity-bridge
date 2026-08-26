@@ -39,7 +39,7 @@ export default function ContactPage() {
                             <h3 className="font-bold text-slate-900 dark:text-white text-lg">Call Us</h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">Mon-Fri from 8am to 5pm.</p>
                             <a href="tel:+1234567890" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-                                +1 (234) 567-890
+                                +9470 403 9411
                             </a>
                         </div>
                     </div>

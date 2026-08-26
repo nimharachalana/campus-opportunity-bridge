@@ -124,6 +124,7 @@ export async function createOpportunity(opportunity: Partial<Opportunity>): Prom
     posted_by: opportunity.posted_by || null,
     status: opportunity.status || 'open',
     created_at: opportunity.created_at || new Date().toISOString(),
+    image_url: opportunity.image_url || null,
   }
 
   // Save to local storage for immediate visibility
@@ -151,6 +152,7 @@ export async function createOpportunity(opportunity: Partial<Opportunity>): Prom
         max_applicants: newOpp.max_applicants,
         posted_by: typeof newOpp.posted_by === 'string' ? newOpp.posted_by : null,
         status: newOpp.status,
+        image_url: newOpp.image_url,
       }])
       .select()
 

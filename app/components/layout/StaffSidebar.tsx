@@ -8,11 +8,21 @@ import {
   Eye,
   LogOut,
   ShieldCheck,
+  Briefcase,
+  FlaskConical,
+  Building2,
+  Layers,
 } from 'lucide-react'
 
 export default function StaffSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  // use searchParams to determine the active sub-tab if any
+  let activeTab = 'opportunity'
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    activeTab = params.get('tab') || 'opportunity'
+  }
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -62,23 +72,61 @@ export default function StaffSidebar() {
             const Icon = item.icon
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`p-3 rounded-2xl flex items-start gap-3 transition-all ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 font-bold'
-                    : 'hover:bg-slate-900 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
-                <div>
-                  <span className="text-xs font-semibold block">{item.label}</span>
-                  <span className={`text-[10px] block ${isActive ? 'text-indigo-200' : 'text-slate-500'}`}>
-                    {item.desc}
-                  </span>
-                </div>
-              </Link>
+              <div key={item.href} className="flex flex-col">
+                <Link
+                  href={item.href}
+                  className={`p-3 rounded-2xl flex items-start gap-3 transition-all ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 font-bold'
+                      : 'hover:bg-slate-900 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
+                  <div>
+                    <span className="text-xs font-semibold block">{item.label}</span>
+                    <span className={`text-[10px] block ${isActive ? 'text-indigo-200' : 'text-slate-500'}`}>
+                      {item.desc}
+                    </span>
+                  </div>
+                </Link>
+
+                {isActive && item.href === '/cob/staff/submit' && (
+                  <div className="pl-4 mt-2 mb-2 flex flex-col gap-1 relative before:content-[''] before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-800 before:rounded-full">
+                    <Link
+                      href="/cob/staff/submit?tab=opportunity"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ml-2 ${
+                        activeTab === 'opportunity' ? 'text-indigo-400 bg-slate-900' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                      }`}
+                    >
+                      <Briefcase className="w-3.5 h-3.5" /> Post Opportunity
+                    </Link>
+                    <Link
+                      href="/cob/staff/submit?tab=research"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ml-2 ${
+                        activeTab === 'research' ? 'text-purple-400 bg-slate-900' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                      }`}
+                    >
+                      <FlaskConical className="w-3.5 h-3.5" /> Publish Research
+                    </Link>
+                    <Link
+                      href="/cob/staff/submit?tab=community"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ml-2 ${
+                        activeTab === 'community' ? 'text-cyan-400 bg-slate-900' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                      }`}
+                    >
+                      <Building2 className="w-3.5 h-3.5" /> Add Communities
+                    </Link>
+                    <Link
+                      href="/cob/staff/submit?tab=manage"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ml-2 ${
+                        activeTab === 'manage' ? 'text-amber-400 bg-slate-900' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" /> Manage Published
+                    </Link>
+                  </div>
+                )}
+              </div>
             )
           })}
         </nav>

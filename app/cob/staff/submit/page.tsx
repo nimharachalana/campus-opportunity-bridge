@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createOpportunity, fetchOpportunities, updateOpportunityStatus, deleteOpportunity } from '@/app/lib/api/opportunities'
 import { supabase } from '@/app/lib/supabase'
 import { OpportunityType, Opportunity } from '@/app/types'
@@ -30,8 +31,17 @@ import Link from 'next/link'
 
 const COMMUNITIES_STORAGE_KEY = 'cob_all_communities'
 
-export default function StaffPublishingHub() {
+function StaffPublishingContent() {
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<'opportunity' | 'research' | 'community' | 'manage'>('opportunity')
+
+  useEffect(() => {
+    if (tabParam && ['opportunity', 'research', 'community', 'manage'].includes(tabParam)) {
+      setActiveTab(tabParam as any)
+      setFeedback(null)
+    }
+  }, [tabParam])
 
   // --- 1. General Opportunity Form State ---
   const [oppTitle, setOppTitle] = useState('')
@@ -42,6 +52,7 @@ export default function StaffPublishingHub() {
   const [oppSeats, setOppSeats] = useState('2')
   const [oppDeadline, setOppDeadline] = useState('')
   const [oppDescription, setOppDescription] = useState('')
+  const [oppImage, setOppImage] = useState<string | null>(null)
 
   // --- 2. Research Project Form State ---
   const [researchTitle, setResearchTitle] = useState('')
@@ -54,6 +65,7 @@ export default function StaffPublishingHub() {
   const [researchSeats, setResearchSeats] = useState('2')
   const [researchDeadline, setResearchDeadline] = useState('')
   const [researchAbstract, setResearchAbstract] = useState('')
+  const [researchImage, setResearchImage] = useState<string | null>(null)
 
   // --- 3. Community Registration State ---
   const [communities, setCommunities] = useState<CommunityRecord[]>([])
@@ -63,6 +75,18 @@ export default function StaffPublishingHub() {
   const [newCommLeadName, setNewCommLeadName] = useState('')
   const [newCommLeadEmail, setNewCommLeadEmail] = useState('')
   const [newCommDescription, setNewCommDescription] = useState('')
+  const [commImage, setCommImage] = useState<string | null>(null)
+
+  // Image Upload Handler
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      if (event.target?.result) setter(event.target.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
 
   // --- 4. Published List State ---
   const [publishedItems, setPublishedItems] = useState<Opportunity[]>([])
@@ -123,6 +147,7 @@ export default function StaffPublishingHub() {
         required_skills,
         posted_by: user?.id || 'staff-user',
         status: 'open',
+        image_url: oppImage,
       })
 
       setFeedback({ type: 'success', message: `Opportunity "${oppTitle}" published successfully and is now visible to all students!` })
@@ -130,6 +155,7 @@ export default function StaffPublishingHub() {
       setOppSkills('')
       setOppDescription('')
       setOppDeadline('')
+      setOppImage(null)
       loadPublished()
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to publish opportunity.' })
@@ -163,6 +189,7 @@ export default function StaffPublishingHub() {
         required_skills,
         posted_by: user?.id || 'faculty-staff',
         status: 'open',
+        image_url: researchImage,
       })
 
       setFeedback({ type: 'success', message: `Research Project "${researchTitle}" published and highlighted on the Student Portal!` })
@@ -170,6 +197,7 @@ export default function StaffPublishingHub() {
       setResearchPI('')
       setResearchAbstract('')
       setResearchDeadline('')
+      setResearchImage(null)
       loadPublished()
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to publish research.' })
@@ -191,6 +219,7 @@ export default function StaffPublishingHub() {
       lead_email: newCommLeadEmail.trim() || 'coordinator@campusbridge.edu',
       description: newCommDescription.trim() || 'Faculty recognized student organization.',
       created_at: new Date().toISOString(),
+      image_url: commImage || undefined,
     }
 
     const updated = [newRecord, ...communities]
@@ -204,6 +233,7 @@ export default function StaffPublishingHub() {
     setNewCommLeadName('')
     setNewCommLeadEmail('')
     setNewCommDescription('')
+    setCommImage(null)
   }
 
   const handleDeleteCommunity = (id: string, name: string) => {
@@ -258,55 +288,9 @@ export default function StaffPublishingHub() {
             <Eye className="w-4 h-4 text-indigo-400" /> View Student Feed <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-
-        {/* Tab Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-8 pt-6 border-t border-indigo-800/30">
-          <button
-            type="button"
-            onClick={() => { setActiveTab('opportunity'); setFeedback(null); }}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-              activeTab === 'opportunity'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                : 'bg-slate-950/60 text-slate-300 hover:bg-slate-900 hover:text-white border border-slate-800'
-            }`}
-          >
-            <Briefcase className="w-4 h-4" /> Post Opportunity
-          </button>
-          <button
-            type="button"
-            onClick={() => { setActiveTab('research'); setFeedback(null); }}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-              activeTab === 'research'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                : 'bg-slate-950/60 text-slate-300 hover:bg-slate-900 hover:text-white border border-slate-800'
-            }`}
-          >
-            <FlaskConical className="w-4 h-4" /> Publish Research
-          </button>
-          <button
-            type="button"
-            onClick={() => { setActiveTab('community'); setFeedback(null); }}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-              activeTab === 'community'
-                ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
-                : 'bg-slate-950/60 text-slate-300 hover:bg-slate-900 hover:text-white border border-slate-800'
-            }`}
-          >
-            <Building2 className="w-4 h-4" /> Add Communities
-          </button>
-          <button
-            type="button"
-            onClick={() => { setActiveTab('manage'); setFeedback(null); loadPublished(); }}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-              activeTab === 'manage'
-                ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
-                : 'bg-slate-950/60 text-slate-300 hover:bg-slate-900 hover:text-white border border-slate-800'
-            }`}
-          >
-            <Layers className="w-4 h-4" /> Manage Published ({publishedItems.length})
-          </button>
-        </div>
       </div>
+
+      <div className="space-y-6">
 
       {/* Global Feedback Alert */}
       {feedback && (
@@ -335,6 +319,25 @@ export default function StaffPublishingHub() {
           </div>
 
           <form onSubmit={handlePublishOpportunity} className="space-y-5">
+            <div className="flex flex-col gap-2 border border-dashed border-slate-700 bg-slate-950/50 p-4 rounded-xl items-center justify-center relative overflow-hidden group min-h-[140px]">
+              {oppImage ? (
+                <>
+                  <img src={oppImage} alt="Cover" className="absolute inset-0 h-full w-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="button" onClick={() => setOppImage(null)} className="px-3 py-1.5 bg-rose-500/80 hover:bg-rose-500 text-white text-xs font-bold rounded-lg backdrop-blur-sm transition-all shadow-lg z-10">Remove Image</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mb-1 border border-slate-800">
+                    <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                  <p className="text-sm text-slate-300 font-medium">Upload Cover Image</p>
+                  <p className="text-[10px] text-slate-500 mb-2">Recommended: 1200x400 (Optional)</p>
+                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setOppImage)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                </>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
@@ -485,6 +488,25 @@ export default function StaffPublishingHub() {
           </div>
 
           <form onSubmit={handlePublishResearch} className="space-y-5">
+            <div className="flex flex-col gap-2 border border-dashed border-slate-700 bg-slate-950/50 p-4 rounded-xl items-center justify-center relative overflow-hidden group min-h-[140px]">
+              {researchImage ? (
+                <>
+                  <img src={researchImage} alt="Cover" className="absolute inset-0 h-full w-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="button" onClick={() => setResearchImage(null)} className="px-3 py-1.5 bg-rose-500/80 hover:bg-rose-500 text-white text-xs font-bold rounded-lg backdrop-blur-sm transition-all shadow-lg z-10">Remove Image</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mb-1 border border-slate-800">
+                    <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                  <p className="text-sm text-slate-300 font-medium">Upload Project Image</p>
+                  <p className="text-[10px] text-slate-500 mb-2">Recommended: 1200x400 (Optional)</p>
+                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setResearchImage)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                </>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
@@ -648,6 +670,25 @@ export default function StaffPublishingHub() {
             </div>
 
             <form onSubmit={handleAddCommunity} className="space-y-5">
+              <div className="flex flex-col gap-2 border border-dashed border-slate-700 bg-slate-950/50 p-4 rounded-xl items-center justify-center relative overflow-hidden group min-h-[140px]">
+                {commImage ? (
+                  <>
+                    <img src={commImage} alt="Cover" className="absolute inset-0 h-full w-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button type="button" onClick={() => setCommImage(null)} className="px-3 py-1.5 bg-rose-500/80 hover:bg-rose-500 text-white text-xs font-bold rounded-lg backdrop-blur-sm transition-all shadow-lg z-10">Remove Image</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mb-1 border border-slate-800">
+                      <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>
+                    <p className="text-sm text-slate-300 font-medium">Upload Community Logo/Banner</p>
+                    <p className="text-[10px] text-slate-500 mb-2">Recommended: 800x400 (Optional)</p>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setCommImage)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                  </>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
@@ -925,6 +966,15 @@ export default function StaffPublishingHub() {
           )}
         </div>
       )}
+      </div>
     </div>
+  )
+}
+
+export default function StaffPublishingHub() {
+  return (
+    <Suspense fallback={<div className="p-8 text-white">Loading...</div>}>
+      <StaffPublishingContent />
+    </Suspense>
   )
 }

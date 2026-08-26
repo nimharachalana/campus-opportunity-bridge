@@ -19,6 +19,7 @@ export interface CommunityRecord {
   lead_name: string
   lead_email: string
   created_at: string
+  image_url?: string
 }
 
 export const INITIAL_COMMUNITIES: CommunityRecord[] = [

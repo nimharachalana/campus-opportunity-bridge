@@ -91,8 +91,24 @@ export default function ProfileMenu() {
                             </div>
                         </div>
 
+                        {/* Actions */}
+                        <div className="grid grid-cols-2 gap-3 p-6 pb-2">
+                            <a
+                                href="/cob/student/profile"
+                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm transition-all shadow-md shadow-teal-900/20"
+                            >
+                                <Pencil className="w-4 h-4" /> Edit Profile
+                            </a>
+                            <button
+                                onClick={handleSignOut}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-600 hover:text-red-600 font-bold text-sm transition-all"
+                            >
+                                <LogOut className="w-4 h-4" /> Sign Out
+                            </button>
+                        </div>
+
                         {/* Details */}
-                        <div className="flex flex-col gap-5 p-6">
+                        <div className="flex flex-col gap-5 p-6 pt-4">
                             {/* Email */}
                             <div className="flex items-start gap-3">
                                 <Mail className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
@@ -131,31 +147,35 @@ export default function ProfileMenu() {
                                         <Star className="w-3.5 h-3.5" /> Skills
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
-                                        {(profile?.skills ?? []).map(skill => (
-                                            <span key={skill} className="px-2.5 py-1 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 rounded-full text-xs font-medium">
-                                                {skill}
-                                            </span>
-                                        ))}
+                                        {(profile?.skills ?? []).map((skill: any, idx) => {
+                                            let skillName = 'Unknown'
+                                            if (typeof skill === 'string') {
+                                                try {
+                                                    const p = JSON.parse(skill);
+                                                    if (p && p.name) skillName = p.name;
+                                                    else skillName = skill;
+                                                } catch { skillName = skill; }
+                                            } else if (typeof skill === 'object' && skill !== null) {
+                                                skillName = skill.name || 'Unknown';
+                                            }
+                                            // Handle double stringified
+                                            if (typeof skillName === 'string' && skillName.startsWith('{')) {
+                                                try {
+                                                    const pName = JSON.parse(skillName);
+                                                    if (pName && pName.name) skillName = pName.name;
+                                                } catch {}
+                                            }
+                                            return (
+                                                <span key={idx} className="px-2.5 py-1 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 rounded-full text-xs font-medium">
+                                                    {skillName}
+                                                </span>
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Footer actions */}
-                        <div className="mt-auto p-6 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3">
-                            <a
-                                href="/cob/student/profile"
-                                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm transition-all shadow-md shadow-teal-900/20"
-                            >
-                                <Pencil className="w-4 h-4" /> Edit Profile
-                            </a>
-                            <button
-                                onClick={handleSignOut}
-                                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-600 hover:text-red-600 font-bold text-sm transition-all"
-                            >
-                                <LogOut className="w-4 h-4" /> Sign Out
-                            </button>
-                        </div>
                     </div>
                 </>
             )}

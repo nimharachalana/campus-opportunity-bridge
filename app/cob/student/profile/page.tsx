@@ -25,7 +25,10 @@ export default function StudentProfile() {
     const [message, setMessage] = useState('')
     const [messageType, setMessageType] = useState<'success' | 'error'>('success')
 
-    const [editMode, setEditMode] = useState(false)
+    const [editProfileMode, setEditProfileMode] = useState(false)
+    const [editSkillsMode, setEditSkillsMode] = useState(false)
+    const [customSkill, setCustomSkill] = useState('')
+    const [showPasswordModal, setShowPasswordModal] = useState(false)
 
     // Editable fields
     const [fullName, setFullName] = useState('')
@@ -43,6 +46,7 @@ export default function StudentProfile() {
     // Password change
     const [mustChangePassword, setMustChangePassword] = useState(false)
     const [showPasswordForm, setShowPasswordForm] = useState(false)
+    const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [pwLoading, setPwLoading] = useState(false)
@@ -66,11 +70,27 @@ export default function StudentProfile() {
                     setDepartment(prof.department || '')
                     setGpa(prof.gpa?.toString() || '')
                     const loadedSkills = prof.skills || []
-                    const parsedSkills = loadedSkills.map(s => {
-                        if (typeof s === 'string') return { name: s, percentage: 50 }
-                        return s
+                    const parsedSkills = loadedSkills.map((s: any) => {
+                        let obj: any = { name: 'Unknown', percentage: 50 }
+                        if (typeof s === 'string') {
+                            try {
+                                const p = JSON.parse(s);
+                                if (p && p.name) obj = { ...obj, ...p };
+                                else obj.name = s;
+                            } catch { obj.name = s; }
+                        } else if (typeof s === 'object' && s !== null) {
+                            obj = { ...s };
+                        }
+                        if (typeof obj.name === 'string' && obj.name.startsWith('{')) {
+                            try {
+                                const pName = JSON.parse(obj.name);
+                                if (pName && pName.name) obj.name = pName.name;
+                            } catch {}
+                        }
+                        return obj;
                     })
-                    setSkills(parsedSkills)
+                    const uniqueSkills = Array.from(new Map(parsedSkills.map((s: any) => [s.name, s])).values())
+                    setSkills(uniqueSkills as {name: string, percentage: number}[])
                     setMustChangePassword(prof.must_change_password ?? false)
                     setAvatarUrl(prof.avatar_url || null)
                 }
@@ -80,9 +100,9 @@ export default function StudentProfile() {
         load()
     }, [])
 
-    const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (!file) return
+        if (!file || !user) return
 
         if (file.size > 2 * 1024 * 1024) {
             setMessage('Photo must be smaller than 2MB.')
@@ -90,24 +110,14 @@ export default function StudentProfile() {
             return
         }
 
-        setAvatarFile(file)
+        setAvatarUploading(true)
         const reader = new FileReader()
-        reader.onloadend = () => {
-            setAvatarPreview(reader.result as string)
-        }
-        reader.readAsDataURL(file)
-    }
+        reader.onloadend = async () => {
+            const result = reader.result as string
+            setAvatarPreview(result)
 
-    const handleSave = async () => {
-        if (!user) return
-        setSaving(true)
-        setMessage('')
-
-        let finalAvatarUrl = avatarUrl
-
-        if (avatarFile && avatarPreview) {
             try {
-                finalAvatarUrl = await new Promise<string>((resolve, reject) => {
+                const finalAvatarUrl = await new Promise<string>((resolve, reject) => {
                     const img = new Image()
                     img.onload = () => {
                         const canvas = document.createElement('canvas')
@@ -124,21 +134,48 @@ export default function StudentProfile() {
                         }
                     }
                     img.onerror = reject
-                    img.src = avatarPreview
+                    img.src = result
                 })
+
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ avatar_url: finalAvatarUrl })
+                    .eq('id', user.id)
+
+                if (error) {
+                    setMessage(error.message)
+                    setMessageType('error')
+                } else {
+                    setAvatarUrl(finalAvatarUrl)
+                    setAvatarFile(null)
+                    setAvatarPreview(null)
+                    setProfile(prev => prev ? { ...prev, avatar_url: finalAvatarUrl } : prev)
+                    setMessage('Profile photo updated successfully!')
+                    setMessageType('success')
+                }
             } catch (err) {
-                console.warn('Image compression failed', err)
+                console.warn('Image save failed', err)
+                setMessage('Failed to update photo.')
+                setMessageType('error')
+            } finally {
+                setAvatarUploading(false)
+                setTimeout(() => setMessage(''), 3000)
             }
         }
+        reader.readAsDataURL(file)
+    }
+
+    const handleSaveProfile = async () => {
+        if (!user) return
+        setSaving(true)
+        setMessage('')
 
         const { error } = await supabase
             .from('profiles')
             .update({
                 full_name: fullName,
                 department,
-                gpa: gpa ? parseFloat(gpa) : null,
-                skills,
-                avatar_url: finalAvatarUrl
+                gpa: gpa ? parseFloat(gpa) : null
             })
             .eq('id', user.id)
 
@@ -146,13 +183,33 @@ export default function StudentProfile() {
             setMessage(error.message)
             setMessageType('error')
         } else {
-            setMessage('Profile updated successfully!')
+            setMessage('Profile details updated successfully!')
             setMessageType('success')
-            setEditMode(false)
-            setAvatarUrl(finalAvatarUrl)
-            setAvatarFile(null)
-            setAvatarPreview(null)
-            setProfile(prev => prev ? { ...prev, full_name: fullName, department, gpa: gpa ? parseFloat(gpa) : null, skills, avatar_url: finalAvatarUrl } : prev)
+            setEditProfileMode(false)
+            setProfile(prev => prev ? { ...prev, full_name: fullName, department, gpa: gpa ? parseFloat(gpa) : null } : prev)
+        }
+        setSaving(false)
+        setTimeout(() => setMessage(''), 3000)
+    }
+
+    const handleSaveSkills = async () => {
+        if (!user) return
+        setSaving(true)
+        setMessage('')
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ skills })
+            .eq('id', user.id)
+
+        if (error) {
+            setMessage(error.message)
+            setMessageType('error')
+        } else {
+            setMessage('Skills updated successfully!')
+            setMessageType('success')
+            setEditSkillsMode(false)
+            setProfile(prev => prev ? { ...prev, skills } : prev)
         }
         setSaving(false)
         setTimeout(() => setMessage(''), 3000)
@@ -160,6 +217,12 @@ export default function StudentProfile() {
 
     const addSkill = (name: string) => {
         setSkills(prev => [...prev, { name, percentage: 50 }])
+    }
+    const addCustomSkill = () => {
+        if (customSkill.trim() && !skills.some(s => s.name.toLowerCase() === customSkill.trim().toLowerCase())) {
+            setSkills(prev => [...prev, { name: customSkill.trim(), percentage: 50 }])
+            setCustomSkill('')
+        }
     }
     const removeSkill = (name: string) => {
         setSkills(prev => prev.filter(s => s.name !== name))
@@ -172,18 +235,32 @@ export default function StudentProfile() {
         e.preventDefault()
         setPwError('')
         setPwMessage('')
+        if (!currentPassword) { setPwError('Current password is required'); return }
         if (newPassword !== confirmPassword) { setPwError('Passwords do not match'); return }
         if (newPassword.length < 6) { setPwError('Password must be at least 6 characters'); return }
         setPwLoading(true)
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: user?.email,
+            password: currentPassword
+        })
+
+        if (signInError) {
+            setPwError('Incorrect current password')
+            setPwLoading(false)
+            return
+        }
+
         const { error } = await supabase.auth.updateUser({ password: newPassword })
         if (error) { setPwError(error.message); setPwLoading(false); return }
         if (user?.id) await supabase.from('profiles').update({ must_change_password: false }).eq('id', user.id)
         setPwMessage('Password updated successfully!')
         setPwLoading(false)
+        setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
         setMustChangePassword(false)
-        setShowPasswordForm(false)
+        setTimeout(() => setShowPasswordModal(false), 2000)
     }
 
     if (loading) {
@@ -197,33 +274,41 @@ export default function StudentProfile() {
     const initials = (fullName || profile?.full_name || 'S').charAt(0).toUpperCase()
 
     return (
-        <div className="w-full max-w-4xl mx-auto flex flex-col gap-6">
+        <div className="w-full max-w-6xl mx-auto flex flex-col gap-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white">My Profile</h1>
-                {!editMode ? (
-                    <button
-                        onClick={() => setEditMode(true)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm transition-all shadow-md shadow-teal-900/20"
-                    >
-                        <Pencil className="w-4 h-4" /> Edit Profile
+                <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => setShowPasswordModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-semibold text-sm transition-all shadow-md">
+                        <Lock className="w-4 h-4" /> Change Password
                     </button>
-                ) : (
-                    <div className="flex items-center gap-2">
+                    {!editProfileMode ? (
                         <button
-                            onClick={() => setEditMode(false)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-semibold text-sm transition-all"
+                            type="button"
+                            onClick={() => setEditProfileMode(true)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm transition-all shadow-md shadow-teal-900/20"
                         >
-                            <X className="w-4 h-4" /> Cancel
+                            <Pencil className="w-4 h-4" /> Edit Profile
                         </button>
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm transition-all shadow-md disabled:opacity-60"
-                        >
-                            <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}
-                        </button>
-                    </div>
-                )}
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setEditProfileMode(false)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-semibold text-sm transition-all"
+                            >
+                                <X className="w-4 h-4" /> Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveProfile}
+                                disabled={saving}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm transition-all shadow-md disabled:opacity-60"
+                            >
+                                <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {message && (
@@ -240,8 +325,9 @@ export default function StudentProfile() {
                 </div>
             )}
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start w-full">
             {/* Profile Info Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col gap-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col gap-6 w-full">
                 <div className="flex items-center gap-6">
                     {/* Avatar */}
                     <div className="relative shrink-0 group">
@@ -258,6 +344,7 @@ export default function StudentProfile() {
                         )}
                         {/* Upload overlay */}
                         <button
+                            type="button"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={avatarUploading}
                             className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
@@ -279,17 +366,16 @@ export default function StudentProfile() {
                     <div className="flex flex-col gap-1">
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{profile?.full_name || 'Student'}</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex flex-col gap-2 mt-2 items-start">
                             <span className="inline-block px-2.5 py-0.5 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 text-xs font-bold rounded-full capitalize">
                                 {profile?.role || 'Student'}
                             </span>
                             {profile?.department && (
-                                <span className="inline-block px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full">
+                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
                                     {profile.department}
                                 </span>
                             )}
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">Hover over photo to change it</p>
                     </div>
                 </div>
 
@@ -297,7 +383,7 @@ export default function StudentProfile() {
                     {/* Full Name */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Full Name</label>
-                        {editMode ? (
+                        {editProfileMode ? (
                             <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
                         ) : (
@@ -314,9 +400,18 @@ export default function StudentProfile() {
                     {/* Department */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> Department</label>
-                        {editMode ? (
-                            <input type="text" value={department} onChange={e => setDepartment(e.target.value)} placeholder="e.g. Computer Science"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
+                        {editProfileMode ? (
+                            <select 
+                                value={department} 
+                                onChange={e => setDepartment(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                            >
+                                <option value="" disabled>Select Department</option>
+                                <option value="Department of Engineering Technology">Department of Engineering Technology</option>
+                                <option value="Department of Information and Communication Technology (ICT)">Department of Information and Communication Technology (ICT)</option>
+                                <option value="Department of Biosystems Technology">Department of Biosystems Technology</option>
+                                <option value="Department of Multidisciplinary Studies">Department of Multidisciplinary Studies</option>
+                            </select>
                         ) : (
                             <p className="text-slate-900 dark:text-white font-semibold text-sm">{profile?.department || '—'}</p>
                         )}
@@ -325,9 +420,12 @@ export default function StudentProfile() {
                     {/* GPA */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" /> GPA</label>
-                        {editMode ? (
-                            <input type="number" min="0" max="4" step="0.01" value={gpa} onChange={e => setGpa(e.target.value)} placeholder="e.g. 3.75"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
+                        {editProfileMode ? (
+                            <div className="flex items-center gap-3 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2">
+                                <input type="range" min="0" max="4" step="0.01" value={gpa || 0} onChange={e => setGpa(e.target.value)} className="flex-1 accent-teal-500 cursor-pointer" />
+                                <input type="number" min="0" max="4" step="0.01" value={gpa} onChange={e => setGpa(e.target.value)} placeholder="0.00"
+                                    className="w-20 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white font-bold text-sm outline-none text-center focus:ring-2 focus:ring-teal-500" />
+                            </div>
                         ) : (
                             <p className="text-slate-900 dark:text-white font-semibold text-sm">{profile?.gpa ?? '—'}</p>
                         )}
@@ -336,26 +434,39 @@ export default function StudentProfile() {
             </div>
 
             {/* Skills Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col gap-5">
-                <h2 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                    <Star className="w-5 h-5 text-teal-500" /> Skills
-                </h2>
-                {editMode ? (
-                    <div className="flex flex-col gap-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col gap-5 w-full">
+                <div className="flex items-center justify-between">
+                    <h2 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                        <Star className="w-5 h-5 text-teal-500" /> Skills
+                    </h2>
+                    {!editSkillsMode ? (
+                        <button type="button" onClick={() => setEditSkillsMode(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-semibold text-sm transition-all">
+                            <Pencil className="w-4 h-4" /> Edit Skills
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => setEditSkillsMode(false)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-semibold text-sm transition-all">
+                                <X className="w-4 h-4" /> Cancel
+                            </button>
+                            <button type="button" onClick={handleSaveSkills} disabled={saving} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm transition-all shadow-md disabled:opacity-60">
+                                <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Skills'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+                {editSkillsMode ? (
+                    <div className="flex flex-col gap-6 mt-2">
+
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Add Skills</label>
-                            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
-                                {ALL_SKILLS.filter(s => !skills.some(sk => sk.name === s)).map(skill => (
-                                    <button key={skill} type="button" onClick={() => addSkill(skill)}
-                                        className="px-3 py-1.5 rounded-full text-sm font-medium border bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-teal-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
-                                        + {skill}
-                                    </button>
-                                ))}
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Add Custom Skill</label>
+                            <div className="flex gap-2">
+                                <input type="text" value={customSkill} onChange={e => setCustomSkill(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCustomSkill()} placeholder="e.g. AWS, Docker" className="flex-1 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-white" />
+                                <button type="button" onClick={addCustomSkill} className="px-5 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-bold transition-colors">Add</button>
                             </div>
                         </div>
 
                         {skills.length > 0 && (
-                            <div className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-3 mt-2">
                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Adjust Proficiency</label>
                                 <div className="flex flex-col gap-3">
                                     {skills.map(skill => (
@@ -363,7 +474,7 @@ export default function StudentProfile() {
                                             <span className="font-semibold text-slate-900 dark:text-white min-w-[120px]">{skill.name}</span>
                                             <input type="range" min="0" max="100" value={skill.percentage} onChange={(e) => updateSkillPercentage(skill.name, parseInt(e.target.value))} className="flex-1 accent-teal-500" />
                                             <span className="text-sm font-bold w-10 text-right text-teal-600 dark:text-teal-400">{skill.percentage}%</span>
-                                            <button onClick={() => removeSkill(skill.name)} className="text-slate-400 hover:text-red-500 p-1 ml-2">
+                                            <button type="button" onClick={() => removeSkill(skill.name)} className="text-slate-400 hover:text-red-500 p-1 ml-2">
                                                 <X className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -373,9 +484,9 @@ export default function StudentProfile() {
                         )}
                     </div>
                 ) : (
-                    <div className="flex flex-col w-full">
+                    <div className="flex flex-col w-full mt-2">
                         {skills.length === 0 ? (
-                            <p className="text-sm text-slate-400">No skills added yet. Click Edit Profile to add skills.</p>
+                            <p className="text-sm text-slate-400">No skills added yet. Click Edit Skills to add skills.</p>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 w-full">
                                 {skills.map(skill => (
@@ -395,40 +506,39 @@ export default function StudentProfile() {
                 )}
             </div>
 
-            {/* Password Change Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                        <Lock className="w-5 h-5 text-slate-400" /> Password
-                    </h2>
-                    <button onClick={() => setShowPasswordForm(!showPasswordForm)}
-                        className="text-sm font-semibold text-teal-600 hover:text-teal-500 transition-colors">
-                        {showPasswordForm ? 'Cancel' : 'Change Password'}
-                    </button>
-                </div>
-                {showPasswordForm && (
-                    <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 pt-2">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">New Password</label>
-                                <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Confirm Password</label>
-                                <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
-                            </div>
-                        </div>
-                        {pwError && <p className="text-sm text-red-500 font-medium">{pwError}</p>}
-                        {pwMessage && <p className="text-sm text-emerald-500 font-medium">{pwMessage}</p>}
-                        <button type="submit" disabled={pwLoading}
-                            className="w-full sm:w-auto self-start px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm transition-all disabled:opacity-60">
-                            {pwLoading ? 'Updating...' : 'Update Password'}
-                        </button>
-                    </form>
-                )}
             </div>
+
+            {/* Password Modal */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><Lock className="w-6 h-6 text-teal-500" /> Change Password</h2>
+                            <button type="button" onClick={() => setShowPasswordModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full p-2 transition-colors"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handlePasswordChange} className="flex flex-col gap-5">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Password</label>
+                                <input type="password" required value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">New Password</label>
+                                <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Confirm Password</label>
+                                <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500" />
+                            </div>
+                            {pwError && <p className="text-sm text-red-500 font-medium">{pwError}</p>}
+                            {pwMessage && <p className="text-sm text-emerald-500 font-medium">{pwMessage}</p>}
+                            <div className="flex justify-end gap-3 mt-2">
+                                <button type="button" onClick={() => setShowPasswordModal(false)} className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+                                <button type="submit" disabled={pwLoading} className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm transition-all disabled:opacity-60">{pwLoading ? 'Updating...' : 'Update Password'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

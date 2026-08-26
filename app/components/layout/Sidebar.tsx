@@ -58,12 +58,12 @@ export default function Sidebar() {
                     <div className="flex flex-col gap-3 mt-1">
                         <div className="flex items-center gap-3 text-sm text-slate-300 bg-[#121826]/50 p-2.5 rounded-xl border border-transparent hover:border-slate-700 hover:bg-[#121826] transition-all cursor-default">
                             <Phone className="w-4 h-4 text-teal-400 shrink-0" />
-                            <span className="font-medium">+1 (234) 567-890</span>
+                            <span className="font-medium">+94 70 403 9411</span>
                         </div>
                         
                         <a href="mailto:support@university.edu" className="flex items-center gap-3 text-sm text-slate-300 bg-[#121826]/50 p-2.5 rounded-xl border border-transparent hover:border-slate-700 hover:bg-[#121826] transition-all">
                             <Mail className="w-4 h-4 text-teal-400 shrink-0" />
-                            <span className="truncate font-medium">support@univer...</span>
+                            <span className="truncate font-medium">ruhunatec@gmail.com</span>
                         </a>
                     </div>
                 </div>
