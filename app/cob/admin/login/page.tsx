@@ -17,13 +17,15 @@ import {
     Compass,
     Sparkles,
     AlertCircle,
-    GraduationCap
+    GraduationCap,
+    X
 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminControlPortal() {
     const [adminRole, setAdminRole] = useState<'staff' | 'community'>('staff')
     const [isRegisterMode, setIsRegisterMode] = useState(false)
+    const [toastMessage, setToastMessage] = useState<string | null>(null)
 
     // Common fields
     const [email, setEmail] = useState('')
@@ -58,7 +60,6 @@ export default function AdminControlPortal() {
         const trimmedEmail = email.trim().toLowerCase()
 
         if (isRegisterMode) {
-            // Validate password match
             if (password !== confirmPassword) {
                 setError('Passwords do not match.')
                 setLoading(false)
@@ -71,14 +72,12 @@ export default function AdminControlPortal() {
                 return
             }
 
-            // Staff email validation requirement (university email)
             if (adminRole === 'staff' && !trimmedEmail.includes('@')) {
                 setError('Please provide a valid university email address.')
                 setLoading(false)
                 return
             }
 
-            // Community Admin organization requirement
             if (adminRole === 'community' && !communityId) {
                 setError('Please specify your Community or Organization.')
                 setLoading(false)
@@ -106,22 +105,21 @@ export default function AdminControlPortal() {
                 return
             }
 
-            // Redirect based on assigned role
             if (adminRole === 'staff') {
                 router.push(ROUTES.STAFF_DASH)
             } else {
                 router.push(ROUTES.ADMIN_DASH)
             }
         } else {
-            // Sign In flow
             const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                 email: trimmedEmail,
                 password,
             })
 
             if (signInError) {
-                if (signInError.message.includes('Invalid login credentials')) {
-                    setError('Account not found or incorrect password. If you are new, please register first.')
+                if (signInError.message.toLowerCase().includes('invalid login credentials')) {
+                    setToastMessage('Account not found. Please click "Register Instead" to create an account.')
+                    setTimeout(() => setToastMessage(null), 5000)
                 } else {
                     setError(signInError.message)
                 }
@@ -141,7 +139,19 @@ export default function AdminControlPortal() {
     }
 
     return (
-        <div className="flex min-h-screen w-full bg-slate-950 font-sans selection:bg-purple-500 selection:text-white">
+        <div className="flex min-h-screen w-full bg-slate-950 font-sans selection:bg-purple-500 selection:text-white relative">
+            {toastMessage && (
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 border border-purple-500/30 text-purple-200 px-5 py-3 rounded-2xl shadow-[0_0_40px_-10px_rgba(168,85,247,0.3)] backdrop-blur-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-8 duration-300">
+                    <div className="p-1.5 bg-purple-500/20 rounded-full">
+                        <AlertCircle className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <span className="text-sm font-semibold tracking-wide">{toastMessage}</span>
+                    <button type="button" onClick={() => setToastMessage(null)} className="ml-4 text-purple-400/60 hover:text-purple-300 hover:bg-purple-500/10 p-1.5 rounded-full transition-all">
+                        <X className="w-4 h-4"/>
+                    </button>
+                </div>
+            )}
+
             {/* Left Side - Dark Purple Aesthetic Branding Banner */}
             <div className="hidden lg:flex flex-col flex-1 relative overflow-hidden bg-gradient-to-br from-purple-950 via-slate-900 to-indigo-950 justify-between p-12 border-r border-purple-900/30">
                 <div className="absolute top-1/3 -left-20 w-96 h-96 bg-purple-600/25 rounded-full mix-blend-screen filter blur-[120px] animate-pulse" />
@@ -178,7 +188,6 @@ export default function AdminControlPortal() {
             {/* Right Side - Admin Control Form */}
             <div className="flex flex-1 flex-col items-center justify-between p-6 sm:p-12 lg:p-16 relative bg-slate-900/95 text-slate-100 overflow-y-auto">
                 <div className="w-full max-w-[460px] pt-4 my-auto">
-                    {/* Navigation Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-2 lg:hidden">
                             <ShieldCheck className="w-6 h-6 text-purple-400" />
@@ -193,7 +202,7 @@ export default function AdminControlPortal() {
                         </p>
                     </div>
 
-                    {/* Role Switcher: Student vs Admin */}
+                    {/* Portal Tier Switcher */}
                     <div className="mb-6 space-y-3">
                         <label className="text-xs font-semibold text-purple-300 uppercase tracking-wider block">
                             Select Portal Tier
@@ -215,7 +224,7 @@ export default function AdminControlPortal() {
                         </div>
                     </div>
 
-                    {/* Role Switcher: Staff vs Community Admin */}
+                    {/* Admin Role Switcher */}
                     <div className="mb-6 space-y-3">
                         <label className="text-xs font-semibold text-purple-300 uppercase tracking-wider block">
                             Select Admin Portal Tier
@@ -225,9 +234,9 @@ export default function AdminControlPortal() {
                                 type="button"
                                 onClick={() => setAdminRole('staff')}
                                 className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'staff'
-                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                                        : 'text-slate-400 hover:text-slate-200'
-                                    }`}
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                }`}
                             >
                                 <UserCheck className="w-4 h-4" /> University Staff
                             </button>
@@ -235,16 +244,16 @@ export default function AdminControlPortal() {
                                 type="button"
                                 onClick={() => setAdminRole('community')}
                                 className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${adminRole === 'community'
-                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                                        : 'text-slate-400 hover:text-slate-200'
-                                    }`}
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                }`}
                             >
                                 <Building2 className="w-4 h-4" /> Community Admin
                             </button>
                         </div>
                     </div>
 
-                    {/* Register vs Sign In Toggle Header */}
+                    {/* Register vs Sign In Header */}
                     <div className="mb-6 flex items-center justify-between border-b border-slate-800 pb-4">
                         <div>
                             <h2 className="text-2xl font-extrabold text-white tracking-tight">
@@ -273,15 +282,15 @@ export default function AdminControlPortal() {
                     {/* Form */}
                     <form onSubmit={handleAuth} className="space-y-4">
                         {error && (
-                            <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-sm font-medium flex flex-col gap-2 mb-4 shadow-lg shadow-red-900/20">
+                            <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-sm font-medium flex flex-col gap-2 mb-4">
                                 <div className="flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4 shrink-0" />
                                     <span>{error}</span>
                                 </div>
                                 {!isRegisterMode && error.includes('register first') && (
-                                    <button 
-                                        type="button" 
-                                        onClick={() => { setIsRegisterMode(true); setError(null); }} 
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsRegisterMode(true); setError(null); }}
                                         className="text-left text-xs text-red-200 underline underline-offset-2 hover:text-white transition-colors flex items-center gap-1"
                                     >
                                         Click here to create a new account <ArrowRight className="w-3 h-3" />
@@ -413,8 +422,6 @@ export default function AdminControlPortal() {
                             </div>
                         )}
 
-
-
                         <button
                             type="submit"
                             disabled={loading}
@@ -432,7 +439,7 @@ export default function AdminControlPortal() {
                     </form>
                 </div>
 
-                {/* Instant Guest Access Footer Link */}
+                {/* Guest Access Footer */}
                 <div className="w-full max-w-[460px] mt-6 pt-5 border-t border-slate-800 flex flex-col items-center gap-2">
                     <p className="text-xs text-slate-400">Want to view public student opportunities?</p>
                     <Link

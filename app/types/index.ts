@@ -1,5 +1,5 @@
 export type Role = 'student' | 'staff' | 'admin'
-export type OpportunityType = 'Research' | 'Internship' | 'TA' | 'Lab Assistant' | 'Project'
+export type OpportunityType = 'Research' | 'Internship' | 'TA' | 'Lab Assistant' | 'Project' | 'Free Course'
 export type OpportunityStatus = 'open' | 'closed'
 export type ApplicationStatus = 'pending' | 'under_review' | 'accepted' | 'rejected'
 
@@ -13,7 +13,7 @@ export interface Profile {
   admin_type?: string | null
   department: string | null
   gpa: number | null
-  skills: string[] | null
+  skills: any[] | null
   must_change_password: boolean
   avatar_url: string | null
   created_at: string
@@ -25,12 +25,12 @@ export interface Opportunity {
   description: string
   department: string
   type: string
-  type: OpportunityType
   community_name?: string | null
   supervisor?: string | null
   funding_type?: string | null
   seats?: number | null
   deadline?: string | null
+  max_applicants?: number | null
   min_gpa?: number | null
   required_skills: string[] | null
   posted_by: string | Profile | null
@@ -41,7 +41,6 @@ export interface Opportunity {
   is_remote?: boolean
   benefits?: string | null
   eligibility?: string | null
-  deadline?: string | null
   start_date?: string | null
   location?: string | null
   faculty?: string | null
@@ -51,9 +50,6 @@ export interface Opportunity {
 
 export interface Application {
   id: string
-  opportunity_id: string
-  student_id: string
-  status: 'pending' | 'under_review' | 'accepted' | 'rejected'
   opportunity_id: string | Opportunity
   opportunity?: Opportunity
   student_id: string | Profile
@@ -61,9 +57,6 @@ export interface Application {
   status: ApplicationStatus
   notes: string | null
   applied_at: string
-  // extended fields if joined
-  opportunity?: Opportunity
-  student?: Profile
 }
 
 export interface Notification {
@@ -84,4 +77,13 @@ export interface SupportMessage {
   is_from_admin: boolean
   is_read: boolean
   created_at: string
+}
+
+export interface GuestApplication {
+  id: string
+  opportunity_id: string
+  guest_name: string
+  guest_email: string
+  status: ApplicationStatus
+  applied_at: string
 }

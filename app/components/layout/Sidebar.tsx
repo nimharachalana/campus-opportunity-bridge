@@ -15,8 +15,10 @@ export default function Sidebar() {
     ]
 
     return (
-        <div className="w-64 bg-[#0f172a] text-slate-300 h-screen p-6 flex flex-col gap-6 border-r border-slate-800 shrink-0">
-            <h2 className="text-xl font-bold px-2 text-teal-400 tracking-tight">COB Portal</h2>
+        <div className="w-64 bg-[#121826] text-white h-screen p-4 flex flex-col gap-4 sticky top-0 self-start">
+            <h2 className="text-xl font-bold mb-4 px-2 text-teal-400 flex items-center gap-2">
+                COB Portal
+            </h2>
             <nav className="flex flex-col gap-2">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href
@@ -27,7 +29,7 @@ export default function Sidebar() {
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-semibold ${
                                     isActive 
                                     ? 'bg-[#1e293b] text-teal-400' 
-                                    : 'hover:bg-slate-800/50 hover:text-white'
+                                    : 'text-slate-400 hover:bg-[#1e293b]/50 hover:text-slate-200'
                                 }`}
                             >
                                 <item.icon className={`w-5 h-5 ${isActive ? 'text-teal-400' : 'text-slate-400'}`} />
@@ -41,13 +43,10 @@ export default function Sidebar() {
             </nav>
 
             {/* Premium Support Card */}
-            <div className="mt-auto relative rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-5 overflow-hidden group">
-                {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-teal-500/20 transition-colors"></div>
-                
+            <div className="mt-auto relative rounded-2xl bg-[#1e293b] p-5 overflow-hidden group">
                 <div className="relative z-10 flex flex-col gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shrink-0 shadow-lg">
+                        <div className="w-10 h-10 rounded-full bg-[#121826] border border-slate-700/50 flex items-center justify-center shrink-0 shadow-lg">
                             <MessageSquareHeart className="w-5 h-5 text-teal-400" />
                         </div>
                         <div>
@@ -57,14 +56,14 @@ export default function Sidebar() {
                     </div>
 
                     <div className="flex flex-col gap-3 mt-1">
-                        <div className="flex items-center gap-3 text-sm text-slate-300 bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 group/item hover:border-slate-600 hover:bg-slate-800 transition-all">
-                            <Phone className="w-4 h-4 text-teal-400 shrink-0 group-hover/item:scale-110 transition-transform" />
+                        <div className="flex items-center gap-3 text-sm text-slate-300 bg-[#121826]/50 p-2.5 rounded-xl border border-transparent hover:border-slate-700 hover:bg-[#121826] transition-all cursor-default">
+                            <Phone className="w-4 h-4 text-teal-400 shrink-0" />
                             <span className="font-medium">+1 (234) 567-890</span>
                         </div>
                         
-                        <a href="mailto:support@university.edu" className="flex items-center gap-3 text-sm text-slate-300 bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 group/item hover:border-slate-600 hover:bg-slate-800 transition-all">
-                            <Mail className="w-4 h-4 text-teal-400 shrink-0 group-hover/item:scale-110 transition-transform" />
-                            <span className="truncate font-medium">support@university.edu</span>
+                        <a href="mailto:support@university.edu" className="flex items-center gap-3 text-sm text-slate-300 bg-[#121826]/50 p-2.5 rounded-xl border border-transparent hover:border-slate-700 hover:bg-[#121826] transition-all">
+                            <Mail className="w-4 h-4 text-teal-400 shrink-0" />
+                            <span className="truncate font-medium">support@univer...</span>
                         </a>
                     </div>
                 </div>

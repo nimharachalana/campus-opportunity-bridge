@@ -112,9 +112,9 @@ export default function SupportChatWidget() {
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
             {/* Chat Window */}
             {isOpen && (
-                <div className="bg-white dark:bg-slate-900 w-80 sm:w-96 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden mb-4 animate-in slide-in-from-bottom-5 duration-200">
+                <div className="bg-[#0b0f19] w-80 sm:w-96 rounded-2xl shadow-2xl border border-[#1e293b] flex flex-col overflow-hidden mb-4 animate-in slide-in-from-bottom-5 duration-200">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-teal-600 to-teal-500 p-4 flex items-center justify-between text-white">
+                    <div className="bg-teal-500 p-4 flex items-center justify-between text-white">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                                 <ShieldAlert className="w-5 h-5 text-white" />
@@ -133,10 +133,10 @@ export default function SupportChatWidget() {
                     </div>
 
                     {/* Messages Area */}
-                    <div className="flex-1 p-4 overflow-y-auto max-h-96 min-h-64 bg-slate-50 dark:bg-slate-950 flex flex-col gap-4">
+                    <div className="flex-1 p-4 overflow-y-auto max-h-96 min-h-64 bg-[#0b0f19] text-white flex flex-col gap-4">
                         {messages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 gap-2">
-                                <MessageCircle className="w-8 h-8 text-slate-300 dark:text-slate-700" />
+                                <MessageCircle className="w-8 h-8 text-slate-700" />
                                 <p className="text-sm">Send us a message if you need help with your applications or account.</p>
                             </div>
                         ) : (
@@ -144,8 +144,8 @@ export default function SupportChatWidget() {
                                 <div key={msg.id} className={`flex w-full ${msg.is_from_admin ? 'justify-start' : 'justify-end'}`}>
                                     <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
                                         msg.is_from_admin 
-                                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none' 
-                                        : 'bg-teal-600 text-white rounded-tr-none'
+                                        ? 'bg-[#1e293b] text-slate-200 border-none rounded-tl-none' 
+                                        : 'bg-teal-600 text-white rounded-tr-none border-none'
                                     }`}>
                                         <p>{msg.message}</p>
                                         <span className={`text-[10px] mt-1 block ${msg.is_from_admin ? 'text-slate-400' : 'text-teal-200'}`}>
@@ -159,12 +159,12 @@ export default function SupportChatWidget() {
                     </div>
 
                     {/* Input Area */}
-                    <form onSubmit={handleSendMessage} className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-end gap-2">
+                    <form onSubmit={handleSendMessage} className="p-3 bg-[#121826] flex items-end gap-2 border-t-0">
                         <textarea
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             placeholder="Type your message..."
-                            className="flex-1 max-h-32 min-h-10 resize-none rounded-xl bg-slate-100 dark:bg-slate-800 border-transparent focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-sm px-4 py-2.5 dark:text-white"
+                            className="flex-1 max-h-32 min-h-10 resize-none rounded-xl bg-[#1e293b] border-transparent focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-sm px-4 py-2.5 text-white"
                             rows={1}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {

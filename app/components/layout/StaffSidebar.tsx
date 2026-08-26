@@ -38,7 +38,7 @@ export default function StaffSidebar() {
   ]
 
   return (
-    <div className="w-72 bg-slate-950 text-slate-100 h-screen p-5 flex flex-col justify-between border-r border-slate-800/80 shrink-0">
+    <div className="w-72 bg-slate-950 text-slate-100 h-screen p-5 flex flex-col justify-between border-r border-slate-800/80 shrink-0 sticky top-0 self-start">
       <div className="space-y-6">
         {/* Brand Header */}
         <div className="p-3 bg-indigo-950/40 border border-indigo-800/40 rounded-2xl flex items-center gap-3">
@@ -86,16 +86,7 @@ export default function StaffSidebar() {
 
       {/* Bottom Actions */}
       <div className="space-y-3 pt-4 border-t border-slate-800/80">
-        <Link
-          href="/cob/student/opportunities"
-          target="_blank"
-          className="w-full flex items-center justify-between p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs text-slate-300 font-medium transition-all"
-        >
-          <span className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-indigo-400" /> Student View
-          </span>
-          <span className="text-[10px] px-1.5 py-0.5 bg-indigo-950 text-indigo-300 rounded font-mono">Live</span>
-        </Link>
+
 
         <button
           type="button"

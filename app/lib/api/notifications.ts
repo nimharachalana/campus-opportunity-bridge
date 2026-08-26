@@ -40,3 +40,20 @@ export async function markAllNotificationsAsRead(userId: string) {
     throw new Error(error.message)
   }
 }
+
+export async function createNotification(userId: string, title: string, message: string, type: string = 'info', link: string | null = null) {
+  const { error } = await supabase
+    .from('notifications')
+    .insert([{
+      user_id: userId,
+      title,
+      message,
+      type,
+      link,
+      is_read: false
+    }])
+
+  if (error) {
+    console.warn('Failed to create notification:', error.message)
+  }
+}

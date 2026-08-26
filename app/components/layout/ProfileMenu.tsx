@@ -31,7 +31,9 @@ export default function ProfileMenu() {
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
-        router.push('/login')
+        localStorage.removeItem('cob_current_student')
+        localStorage.removeItem('cob_current_user')
+        router.push('/cob/auth/login')
     }
 
     return (
