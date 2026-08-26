@@ -31,7 +31,7 @@ export default function StudentProfile() {
     const [fullName, setFullName] = useState('')
     const [department, setDepartment] = useState('')
     const [gpa, setGpa] = useState('')
-    const [skills, setSkills] = useState<string[]>([])
+    const [skills, setSkills] = useState<{name: string, percentage: number}[]>([])
 
     // Avatar
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -65,7 +65,12 @@ export default function StudentProfile() {
                     setFullName(prof.full_name || '')
                     setDepartment(prof.department || '')
                     setGpa(prof.gpa?.toString() || '')
-                    setSkills(prof.skills || [])
+                    const loadedSkills = prof.skills || []
+                    const parsedSkills = loadedSkills.map(s => {
+                        if (typeof s === 'string') return { name: s, percentage: 50 }
+                        return s
+                    })
+                    setSkills(parsedSkills)
                     setMustChangePassword(prof.must_change_password ?? false)
                     setAvatarUrl(prof.avatar_url || null)
                 }
@@ -153,8 +158,14 @@ export default function StudentProfile() {
         setTimeout(() => setMessage(''), 3000)
     }
 
-    const toggleSkill = (skill: string) => {
-        setSkills(prev => prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill])
+    const addSkill = (name: string) => {
+        setSkills(prev => [...prev, { name, percentage: 50 }])
+    }
+    const removeSkill = (name: string) => {
+        setSkills(prev => prev.filter(s => s.name !== name))
+    }
+    const updateSkillPercentage = (name: string, percentage: number) => {
+        setSkills(prev => prev.map(s => s.name === name ? { ...s, percentage } : s))
     }
 
     const handlePasswordChange = async (e: React.FormEvent) => {
@@ -330,26 +341,55 @@ export default function StudentProfile() {
                     <Star className="w-5 h-5 text-teal-500" /> Skills
                 </h2>
                 {editMode ? (
-                    <>
-                        <div className="flex flex-wrap gap-2">
-                            {ALL_SKILLS.map(skill => (
-                                <button key={skill} type="button" onClick={() => toggleSkill(skill)}
-                                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${skills.includes(skill) ? 'bg-teal-500 text-white border-teal-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-teal-400'}`}>
-                                    {skill}
-                                </button>
-                            ))}
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Add Skills</label>
+                            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+                                {ALL_SKILLS.filter(s => !skills.some(sk => sk.name === s)).map(skill => (
+                                    <button key={skill} type="button" onClick={() => addSkill(skill)}
+                                        className="px-3 py-1.5 rounded-full text-sm font-medium border bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-teal-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                                        + {skill}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </>
+
+                        {skills.length > 0 && (
+                            <div className="flex flex-col gap-3">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Adjust Proficiency</label>
+                                <div className="flex flex-col gap-3">
+                                    {skills.map(skill => (
+                                        <div key={skill.name} className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                            <span className="font-semibold text-slate-900 dark:text-white min-w-[120px]">{skill.name}</span>
+                                            <input type="range" min="0" max="100" value={skill.percentage} onChange={(e) => updateSkillPercentage(skill.name, parseInt(e.target.value))} className="flex-1 accent-teal-500" />
+                                            <span className="text-sm font-bold w-10 text-right text-teal-600 dark:text-teal-400">{skill.percentage}%</span>
+                                            <button onClick={() => removeSkill(skill.name)} className="text-slate-400 hover:text-red-500 p-1 ml-2">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 ) : (
-                    <div className="flex flex-wrap gap-2">
-                        {(profile?.skills ?? []).length === 0 ? (
+                    <div className="flex flex-col w-full">
+                        {skills.length === 0 ? (
                             <p className="text-sm text-slate-400">No skills added yet. Click Edit Profile to add skills.</p>
                         ) : (
-                            (profile?.skills ?? []).map(skill => (
-                                <span key={skill} className="px-3 py-1.5 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 rounded-full text-sm font-medium">
-                                    {skill}
-                                </span>
-                            ))
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 w-full">
+                                {skills.map(skill => (
+                                    <div key={skill.name} className="flex flex-col gap-1.5 w-full">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-semibold text-slate-700 dark:text-slate-300">{skill.name}</span>
+                                            <span className="text-teal-600 dark:text-teal-400 font-bold">{skill.percentage}%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                                            <div className="bg-teal-500 h-2 rounded-full transition-all duration-500" style={{ width: `${skill.percentage}%` }}></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}

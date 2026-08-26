@@ -81,9 +81,9 @@ export default function NotificationBell() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
-                        <h3 className="font-bold text-slate-900 dark:text-white">Notifications</h3>
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#0b0f19] text-white rounded-2xl shadow-2xl border border-[#1e293b] z-50 overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-[#1e293b] flex justify-between items-center bg-[#121826]">
+                        <h3 className="font-bold text-white">Notifications</h3>
                         {unreadCount > 0 && (
                             <button 
                                 onClick={handleMarkAllRead}
@@ -98,26 +98,26 @@ export default function NotificationBell() {
                         {loading ? (
                             <div className="p-8 text-center text-slate-400 text-sm">Loading...</div>
                         ) : notifications.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500 text-sm">You're all caught up!</div>
+                            <div className="p-8 text-center text-slate-400 text-sm">You're all caught up!</div>
                         ) : (
                             <div className="flex flex-col">
                                 {notifications.map(notif => (
                                     <button 
                                         key={notif.id}
                                         onClick={() => handleNotificationClick(notif)}
-                                        className={`w-full text-left p-4 flex gap-4 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 ${notif.is_read ? 'bg-white dark:bg-slate-900 opacity-70' : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                        className={`w-full text-left p-4 flex gap-4 transition-colors border-b border-[#1e293b] last:border-0 ${notif.is_read ? 'bg-[#0b0f19] opacity-70' : 'bg-[#121826] hover:bg-[#1e293b]'}`}
                                     >
                                         <div className="shrink-0 mt-1">
                                             {getIcon(notif.type)}
                                         </div>
                                         <div className="flex flex-col gap-1 w-full">
                                             <div className="flex justify-between items-start w-full gap-2">
-                                                <h4 className={`text-sm font-semibold ${notif.is_read ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+                                                <h4 className={`text-sm font-semibold ${notif.is_read ? 'text-slate-400' : 'text-white'}`}>
                                                     {notif.title}
                                                 </h4>
                                                 {!notif.is_read && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0 mt-1.5" />}
                                             </div>
-                                            <p className={`text-xs ${notif.is_read ? 'text-slate-500 dark:text-slate-500' : 'text-slate-600 dark:text-slate-300'}`}>
+                                            <p className={`text-xs ${notif.is_read ? 'text-slate-500' : 'text-slate-300'}`}>
                                                 {notif.message}
                                             </p>
                                             <span className="text-[10px] font-medium text-slate-400 mt-1">

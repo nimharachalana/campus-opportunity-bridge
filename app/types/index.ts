@@ -1,5 +1,5 @@
 export type Role = 'student' | 'staff' | 'admin'
-export type OpportunityType = 'Research' | 'Internship' | 'TA' | 'Lab Assistant' | 'Project'
+export type OpportunityType = 'Research' | 'Internship' | 'TA' | 'Lab Assistant' | 'Project' | 'Free Course'
 export type OpportunityStatus = 'open' | 'closed'
 export type ApplicationStatus = 'pending' | 'under_review' | 'accepted' | 'rejected'
 
@@ -13,7 +13,7 @@ export interface Profile {
   admin_type?: string | null
   department: string | null
   gpa: number | null
-  skills: string[] | null
+  skills: any[] | null
   must_change_password: boolean
   avatar_url: string | null
   created_at: string
@@ -30,6 +30,7 @@ export interface Opportunity {
   funding_type?: string | null
   seats?: number | null
   deadline?: string | null
+  max_applicants?: number | null
   min_gpa?: number | null
   required_skills: string[] | null
   posted_by: string | Profile | null
@@ -76,4 +77,13 @@ export interface SupportMessage {
   is_from_admin: boolean
   is_read: boolean
   created_at: string
+}
+
+export interface GuestApplication {
+  id: string
+  opportunity_id: string
+  guest_name: string
+  guest_email: string
+  status: ApplicationStatus
+  applied_at: string
 }
