@@ -42,6 +42,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [decisionNotice, setDecisionNotice] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -236,10 +237,10 @@ export default function AdminDashboardPage() {
           ) : (
             <div className="space-y-3">
               {pendingApplications.map((app) => (
-                <div
-                  key={app.id}
-                  className="p-4 bg-slate-950/80 border border-slate-800/80 hover:border-purple-500/40 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-all"
-                >
+                <div key={app.id} className="flex flex-col gap-0">
+                  <div
+                    className="p-4 bg-slate-950/80 border border-slate-800/80 hover:border-purple-500/40 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-all"
+                  >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-white">
@@ -256,9 +257,16 @@ export default function AdminDashboardPage() {
                       </strong>{' '}
                       • Applied {new Date(app.applied_at || Date.now()).toLocaleDateString()}
                     </p>
+                    <button
+                        type="button"
+                        onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
+                        className="text-purple-400 hover:text-purple-300 text-[11px] font-semibold mt-1 flex items-center gap-1 transition-colors"
+                    >
+                        {expandedId === app.id ? 'Hide Details' : 'View Skills & Details'}
+                    </button>
                   </div>
 
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                     <button
                       type="button"
                       disabled={updatingId === app.id}
@@ -276,6 +284,41 @@ export default function AdminDashboardPage() {
                       <XCircle className="w-3.5 h-3.5" /> Reject
                     </button>
                   </div>
+                </div>
+
+                {expandedId === app.id && (
+                  <div className="mt-2 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {app.student?.department && (
+                          <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 mb-2 pb-2 border-b border-slate-800/60">
+                              <p><strong>Department:</strong> {app.student.department}</p>
+                              <p><strong>GPA:</strong> {app.student.gpa || 'N/A'}</p>
+                          </div>
+                      )}
+
+                      <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Reported Skills</h5>
+                      {app.student?.skills && app.student.skills.length > 0 ? (
+                          <div className="flex flex-col gap-2">
+                              {app.student.skills.map((skill: any, idx: number) => {
+                                  const name = typeof skill === 'string' ? skill : skill.name
+                                  const pct = typeof skill === 'string' ? 50 : skill.percentage
+                                  return (
+                                      <div key={idx} className="flex flex-col gap-1 w-full max-w-sm">
+                                          <div className="flex justify-between text-[11px]">
+                                              <span className="font-semibold text-slate-300">{name}</span>
+                                              <span className="text-purple-400 font-bold">{pct}%</span>
+                                          </div>
+                                          <div className="w-full bg-slate-800 rounded-full h-1">
+                                              <div className="bg-purple-500 h-1 rounded-full transition-all" style={{ width: `${pct}%` }}></div>
+                                          </div>
+                                      </div>
+                                  )
+                              })}
+                          </div>
+                      ) : (
+                          <p className="text-[11px] text-slate-500 italic">No skills provided or this is a guest application.</p>
+                      )}
+                  </div>
+                )}
                 </div>
               ))}
             </div>

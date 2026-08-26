@@ -37,6 +37,7 @@ export default function AdminOpportunitiesPage() {
   const [skillsInput, setSkillsInput] = useState('')
   const [skillsList, setSkillsList] = useState<string[]>(['TypeScript', 'React'])
   const [seats, setSeats] = useState('2')
+  const [maxApplicants, setMaxApplicants] = useState('')
   const [deadline, setDeadline] = useState('')
   const [description, setDescription] = useState('')
 
@@ -97,6 +98,7 @@ export default function AdminOpportunitiesPage() {
         community_name: community || adminCommunity,
         required_skills: skillsList,
         seats: parseInt(seats) || 1,
+        max_applicants: maxApplicants ? parseInt(maxApplicants) : null,
         deadline: deadline || null,
         description,
         posted_by: user?.id || 'admin-user',
@@ -112,6 +114,7 @@ export default function AdminOpportunitiesPage() {
       setTitle('')
       setDescription('')
       setDeadline('')
+      setMaxApplicants('')
       loadData()
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to post opportunity' })
@@ -228,6 +231,7 @@ export default function AdminOpportunitiesPage() {
                   <option value="TA">Teaching Assistant (TA)</option>
                   <option value="Lab Assistant">Lab Assistant</option>
                   <option value="Research">Academic Research</option>
+                  <option value="Free Course">Free Course (Guest Available)</option>
                 </select>
               </div>
 
@@ -329,16 +333,32 @@ export default function AdminOpportunitiesPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Application Deadline
-              </label>
-              <input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full p-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-white outline-none cursor-pointer"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Application Deadline
+                </label>
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  className="w-full p-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-white outline-none cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Max Applicants Limit
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="e.g. 50 (optional)"
+                  value={maxApplicants}
+                  onChange={(e) => setMaxApplicants(e.target.value)}
+                  className="w-full p-2.5 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/30"
+                />
+              </div>
             </div>
 
             <div>

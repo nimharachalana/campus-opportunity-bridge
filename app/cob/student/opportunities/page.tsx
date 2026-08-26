@@ -74,6 +74,20 @@ export default function StudentOpportunitiesPage() {
     setMessage(null)
 
     try {
+      const opp = opportunities.find(o => o.id === opportunityId)
+      if (opp && opp.max_applicants) {
+        const { count: regCount } = await supabase.from('applications').select('*', { count: 'exact', head: true }).eq('opportunity_id', opportunityId)
+        const { count: guestCount } = await supabase.from('guest_applications').select('*', { count: 'exact', head: true }).eq('opportunity_id', opportunityId)
+        
+        const total = (regCount || 0) + (guestCount || 0)
+        
+        if (total >= opp.max_applicants) {
+          alert('Sorry, this opportunity has reached its maximum number of applicants.')
+          setApplyingId(null)
+          return
+        }
+      }
+
       await applyToOpportunity(opportunityId, studentId)
       setAppliedSet((prev) => new Set(prev).add(opportunityId))
       setMessage('Application submitted successfully!')

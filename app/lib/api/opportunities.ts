@@ -40,9 +40,69 @@ export async function fetchOpportunities(): Promise<Opportunity[]> {
     }
   }
 
-  return Array.from(map.values()).sort(
+  let merged = Array.from(map.values()).sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   )
+
+  // Ensure at least one Free Course exists for demonstration
+  if (!merged.some(opp => opp.type === 'Free Course')) {
+    merged.push({
+      id: 'mock-free-course-1',
+      title: 'Introduction to Web Development',
+      description: 'A comprehensive free course covering HTML, CSS, and basic JavaScript. Perfect for absolute beginners.',
+      department: 'Computer Science',
+      type: 'Free Course',
+      community_name: 'General Faculty',
+      supervisor: 'Prof. Smith',
+      funding_type: 'Unfunded',
+      seats: 100,
+      max_applicants: 100,
+      deadline: '2027-01-01',
+      min_gpa: null,
+      required_skills: ['None'],
+      posted_by: 'system',
+      status: 'open',
+      created_at: new Date().toISOString()
+    })
+    merged.push({
+      id: 'mock-free-course-2',
+      title: 'Data Science Fundamentals',
+      description: 'Learn the basics of data analysis using Python and Pandas. A great starting point for aspiring data scientists.',
+      department: 'Information Technology',
+      type: 'Free Course',
+      community_name: 'Data Community',
+      supervisor: 'Dr. Alan',
+      funding_type: 'Unfunded',
+      seats: 50,
+      max_applicants: 50,
+      deadline: '2027-02-15',
+      min_gpa: null,
+      required_skills: ['Python Basics'],
+      posted_by: 'system',
+      status: 'open',
+      created_at: new Date(Date.now() - 86400000).toISOString()
+    })
+    merged.push({
+      id: 'mock-free-course-3',
+      title: 'UI/UX Design Masterclass',
+      description: 'Master Figma and learn how to create stunning, user-friendly interfaces for web and mobile applications.',
+      department: 'Design',
+      type: 'Free Course',
+      community_name: 'Design Circle',
+      supervisor: 'Ms. Sarah',
+      funding_type: 'Unfunded',
+      seats: 75,
+      max_applicants: 75,
+      deadline: '2027-03-10',
+      min_gpa: null,
+      required_skills: ['Creative Thinking'],
+      posted_by: 'system',
+      status: 'open',
+      created_at: new Date(Date.now() - 172800000).toISOString()
+    })
+  }
+
+  return merged
 }
 
 export async function createOpportunity(opportunity: Partial<Opportunity>): Promise<Opportunity> {
@@ -57,6 +117,7 @@ export async function createOpportunity(opportunity: Partial<Opportunity>): Prom
     supervisor: opportunity.supervisor || null,
     funding_type: opportunity.funding_type || 'Funded',
     seats: opportunity.seats || 1,
+    max_applicants: opportunity.max_applicants || null,
     deadline: opportunity.deadline || null,
     min_gpa: opportunity.min_gpa || null,
     required_skills: opportunity.required_skills || [],
@@ -87,6 +148,7 @@ export async function createOpportunity(opportunity: Partial<Opportunity>): Prom
         department: newOpp.department,
         type: newOpp.type,
         required_skills: newOpp.required_skills,
+        max_applicants: newOpp.max_applicants,
         posted_by: typeof newOpp.posted_by === 'string' ? newOpp.posted_by : null,
         status: newOpp.status,
       }])

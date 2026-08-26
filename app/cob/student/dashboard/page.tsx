@@ -124,18 +124,18 @@ export default function StudentDashboard() {
 
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[1, 2].map(n => <div key={n} className="h-28 bg-white dark:bg-slate-900 rounded-2xl animate-pulse border border-slate-200 dark:border-slate-800" />)}
+                        {[1, 2].map(n => <div key={n} className="h-28 bg-[#121826] rounded-2xl animate-pulse border border-slate-800" />)}
                     </div>
                 ) : applications.length === 0 ? (
-                    <div className="p-8 text-center bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-500">
+                    <div className="p-8 text-center bg-[#121826] rounded-2xl border border-dashed border-slate-700 text-slate-500">
                         You haven't applied to any opportunities yet.
                     </div>
                 ) : (
                     <div className="grid gap-4">
                         {applications.map((app: any) => (
-                            <div key={app.id} className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div key={app.id} className="p-5 bg-[#121826] rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors hover:border-slate-700">
                                 <div className="flex flex-col gap-2">
-                                    <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                                    <h3 className="font-bold text-white text-base">
                                         {app.opportunity?.title || 'Unknown Opportunity'}
                                     </h3>
                                     
@@ -152,14 +152,14 @@ export default function StudentDashboard() {
                                 </div>
 
                                 <div className="flex items-center gap-4 mt-2 sm:mt-0">
-                                    <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border ${
-                                        app.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/50 dark:border-amber-900/50' : 
-                                        app.status === 'accepted' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-900/50' : 
-                                        'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+                                    <span className={`px-3 py-1 text-[10px] uppercase font-bold rounded-full border ${
+                                        app.status === 'pending' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 
+                                        app.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                        'bg-slate-800 text-slate-400 border-slate-700'
                                     }`}>
                                         {app.status}
                                     </span>
-                                    <button className="text-teal-600 hover:text-teal-500 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 p-2 rounded-xl transition-colors">
+                                    <button className="text-teal-500 hover:text-teal-400 bg-teal-900/20 hover:bg-teal-900/40 p-2 rounded-full transition-colors flex items-center justify-center">
                                         <ChevronRight className="w-4 h-4" />
                                     </button>
                                 </div>
